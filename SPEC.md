@@ -1,44 +1,39 @@
-# Specification: Lecture Notes on Neural Network Scaling Limits via Nonstandard Analysis
+# Specification: Lecture Notes on Neural Network Scaling Limits via Nonstandard Clifford Analysis
 
-## 1. Purpose and Scope
+## 1. Purpose and Two-Stage Architecture
 
-This repository rewrites the mathematics of Mufan Li's *Lecture Notes on Neural Network Scaling Limits* (STAT 946, University of Waterloo, September 5, 2026 draft) into **Nonstandard Analysis (NSA)**, while preserving Mufan Li's exposition, narrative voice, chapter and section organization, examples, tables, figures, and exercises as closely as possible.
+This repository rewrites the mathematics of Mufan Li's *Lecture Notes on Neural Network Scaling Limits* (STAT 946, University of Waterloo, September 5, 2026 draft) in two strictly sequenced stages, preserving Mufan Li's exposition, narrative voice, chapter and section organization, examples, tables, figures, and exercises as closely as possible:
 
-Two synchronized artifacts are maintained from the same mathematical development:
+* **Stage 1 (`nsa` bookmark, `pdf/nn_scaling_nsa.pdf`)**: Pure **Nonstandard Analysis (NSA)** in Robinson's $\aleph_1$-saturated enlargement $({}^*\mathbb{R}, {}^*\mathbb{N})$ and Loeb probability spaces $(\Omega, \mathcal{L}(\mathcal{A}), L({}^*\mathbb{P}))$.
+* **Stage 2 (`main` bookmark, `pdf/nn_scaling_clifford.pdf`)**: **Nonstandard Clifford Analysis**, synthesizing Robinson's Nonstandard Analysis with Hestenes–Sobczyk Geometric Calculus / Blade Algebra and Brackx–Delanghe–Sommen Monogenic Dirac Analysis over internal hyperfinite Clifford algebras ${}^*\mathcal{C}\ell_N = \mathcal{C}\ell({}^*\mathbb{R}^N)$ and standard Clifford algebras $\mathcal{C}\ell_m = \mathcal{C}\ell(\mathbb{R}^m)$.
 
-1. **Full LaTeX Book (`tex/` -> `pdf/nn_scaling_nsa.pdf`)**: A complete, publication-grade LaTeX monograph matching all 6 chapters, the Notation reference, all exercises, figures, tables, Appendix A, Acknowledgements, and Bibliography of Mufan Li's lecture notes, with limit-based asymptotic arguments replaced by hyperfinite and Loeb-measure Nonstandard Analysis.
-2. **Verso / Lean 4 Literate Site (`NNScaling/` -> `:literateHtml`)**: A chapter-by-chapter Lean 4 (`v4.35.0`) + Mathlib + Verso literate formalization and interactive web book deployed via GitHub Pages (bundling the compiled PDF monograph).
+Both compiled PDF monographs (`pdf/nn_scaling_nsa.pdf` and `pdf/nn_scaling_clifford.pdf`) are preserved side-by-side and bundled with the Lean 4 (`v4.35.0`) + Mathlib + Verso literate site (`:literateHtml`).
 
-## 2. Nonstandard Framework
+---
 
-We work in a countably saturated ($\aleph_1$-saturated) nonstandard enlargement $({}^*\mathbb{R}, {}^*\mathbb{N})$ of the real universe:
+## 2. Nonstandard Clifford Analysis Framework
 
-* **Hyperreal Magnitude Rings**:
-  * $\mathbb{L} = \{x \in {}^*\mathbb{R} : \exists C \in \mathbb{R}_{>0},\; |x| \le C\}$ denotes the ring of *limited* hyperreals (replacing asymptotic $\mathcal{O}(1)$).
-  * $\mathbb{I} = \{\varepsilon \in {}^*\mathbb{R} : \forall c \in \mathbb{R}_{>0},\; |\varepsilon| < c\}$ denotes the maximal ideal of *infinitesimals* ($\varepsilon \approx 0$, replacing $o(1)$).
-  * $\mathbb{A} = \mathbb{L} \setminus \mathbb{I}$ denotes the multiplicative group of *appreciable* hyperreals (replacing $\Theta(1)$), with asymptotic equivalence $x \asymp y \iff x/y \in \mathbb{A}$.
-  * $\operatorname{st} : \mathbb{L} \to \mathbb{R}$ is the *standard part* (shadow) homomorphism, characterized by $x \approx \operatorname{st}(x)$.
-* **Loeb Probability Spaces**:
-  * Every hyperfinite or internal probability space $(\Omega, \mathcal{A}, {}^*\mathbb{P})$ induces a complete, countably additive standard probability space $(\Omega, \mathcal{L}(\mathcal{A}), L(\mathbb{P}))$ via Loeb's construction, $L(\mathbb{P})(A) = \operatorname{st}({}^*\mathbb{P}(A))$ for $A \in \mathcal{A}$.
-  * Weak convergence in distribution $Z^{(n)} \xrightarrow{d} Z$ and convergence in probability $X^{(n)} \xrightarrow{\mathbb{P}} c$ are replaced by *Loeb almost-sure shadows* $\operatorname{st}(Z^{(N)}) \sim Z$ and *infinitesimal concentration* $X^{(N)} \approx c$ in $L(\mathbb{P})$-probability at an unlimited hyperinteger $N \in {}^*\mathbb{N} \setminus \mathbb{N}$.
-* **Path-Space Lifting (Anderson & Keisler)**:
-  * Rescaled discrete processes over hyperfinite grids $\mathbb{T}_N = \{0, \Delta\tau, 2\Delta\tau, \dots\}$ with $\Delta\tau = 1/N \approx 0$ are analyzed via *S-continuity* and Keisler–Lindstrøm hyperfinite stochastic difference equations $\Delta X_\ell = b(X_\ell)\Delta\tau + \sigma(X_\ell)\Delta B_\ell + \tilde{o}_\ell(\Delta\tau)$, whose pointwise standard parts solve the corresponding standard Itô SDEs without Skorohod $J_1$ jump-time reparameterizations.
+1. **Hyperreal Magnitude Rings & Standard-Part Algebra Homomorphism**:
+   * Limited ring $\mathbb{L}$, infinitesimal maximal ideal $\mathbb{I}$ ($\approx$), appreciable group $\mathbb{A} = \mathbb{L}\setminus\mathbb{I}$ ($\asymp$), and shadow homomorphism $\operatorname{st} : \mathbb{L} \to \mathbb{R}$.
+   * For standard dimension $m \in \mathbb{N}$, the limited multivector subring $\mathbb{L}(\mathcal{C}\ell_m) := \mathbb{L} \otimes_{\mathbb{R}} \mathcal{C}\ell_m \subset {}^*\mathcal{C}\ell_m$ carries the unique $\mathbb{R}$-algebra standard-part homomorphism $\operatorname{st} : \mathbb{L}(\mathcal{C}\ell_m) \to \mathcal{C}\ell_m$ with infinitesimal multivector ideal kernel $\mathbb{I}(\mathcal{C}\ell_m) := \mathbb{I} \otimes_{\mathbb{R}} \mathcal{C}\ell_m$, commuting with grade projections $\langle \cdot \rangle_k$, reversion $(\cdot)^\sim$, grade involution, and interior contractions $\mathbin{\lrcorner}, \mathbin{\llcorner}$.
+2. **Geometric Product, Blades, Contractions, and Rotors**:
+   * Vectors $u, v \in {}^*\mathbb{R}^N \hookrightarrow {}^*\mathcal{C}\ell_N$ multiply via $u v = \langle u v \rangle_0 + u \wedge v$, with $u^2 = \lVert u \rVert^2$ and reversion $(v_1 \cdots v_k)^\sim = v_k \cdots v_1$.
+   * Orthogonal projection onto an internal $r$-subspace spanned by an $r$-blade $\bm{B} = b_1 \wedge \dots \wedge b_r$ with $\langle \bm{B}^\sim \bm{B}\rangle_0 > 0$ is Hestenes' coordinate-free contraction formula $P_{\bm{B}}(x) = (x \mathbin{\lrcorner} \bm{B})\bm{B}^{-1}$, with orthogonal rejection $P_{\bm{B}}^\perp(x) = (x \wedge \bm{B})\bm{B}^{-1}$.
+   * Orthogonal transformations act by $\operatorname{Pin}(m)$ / $\operatorname{Spin}(m)$ versor sandwiching $x \mapsto R x R^\sim$, with Lie algebra $\mathfrak{spin}(m) = \bigwedge^2(\mathbb{R}^m)$ generated by simple unit bivectors $(e_i \wedge e_j)^2 = -1$.
+3. **Vector Derivative / Dirac Operator & Monogenic Transport**:
+   * On parameter or state space, the vector derivative $\partial_\theta = \sum_{p=1}^P e_p \partial_{\theta_p}$ satisfies $\partial_\theta^2 = \Delta_\theta$ (scalar Laplacian) and splits any smooth vector field $v$ into scalar divergence and bivector curl: $\partial_\theta v = \langle \partial_\theta v \rangle_0 + \partial_\theta \wedge v$.
 
-## 3. Chapter-by-Chapter Architecture
+---
 
-| Chapter | LaTeX File | Lean / Verso Module | Core Nonstandard Mechanism |
+## 3. Chapter-by-Chapter Nonstandard Clifford Architecture
+
+| Chapter | LaTeX File | Lean / Verso Module | Core Nonstandard Clifford Mechanism |
 |---|---|---|---|
-| 1. Introduction | `tex/ch01_intro.tex` | `NNScaling.Ch01_Introduction` | Scaling laws as leading infinitesimal microscope terms $N^\alpha({}^*L(x_N) - L_\infty) \approx c$; Anderson's hyperfinite Brownian motion; hyperfinite Wigner ESD shadow; Loeb McKean–Vlasov particles. |
-| Notation | `tex/notation.tex` | `NNScaling.Foundations` | $\mathbb{L}, \mathbb{I}, \mathbb{A}$, $\approx$, $\operatorname{st}$, unlimited $N, D, M \in {}^*\mathbb{N}\setminus\mathbb{N}$, Loeb measure $L(\mathbb{P})$. |
-| 2. Kernel Limits: NNGP & NTK | `tex/ch02_kernels.tex` | `NNScaling.Ch02_Kernels` | Unlimited width $N \in {}^*\mathbb{N}\setminus\mathbb{N}$ at standard $d, m, n_0$; Loeb SLLN $\Phi_\ell^{(N)} \approx \Phi_\ell$; monadic parameter displacement $\frac{1}{N}\|\theta(s)-\theta(0)\|^2 \approx 0$ freezing $K_t^{(N)} \approx K$; internal Gaussian conditioning by Transfer. |
-| 3. Double Descent | `tex/ch03_double_descent.tex` | `NNScaling.Ch03_DoubleDescent` | Proportional unlimited $(M, N_0, N)$ with $\gamma = \operatorname{st}(N_0/M)$ and $\delta = \operatorname{st}(N/M)$; internal QR/Moore–Penrose/Schur identities by Transfer + inverse-Wishart trace shadows. |
-| 4. Feature Learning & Mean-Field | `tex/ch04_feature_learning.tex` | `NNScaling.Ch04_FeatureLearning` | Valuation-group algebra in ${}^*\mathbb{R}^\times/\mathbb{A}$ selecting $\gamma_N \asymp \sqrt{N}, \eta_N \asymp N$; Loeb pushforward $\rho_t = L(\rho_t^{(N)})\circ\operatorname{st}^{-1}$ solving weak continuity PDE; representative Loeb neuron for DMFT. |
-| 5. Depth Scaling & Covariance SDE | `tex/ch05_depth_sde.tex` | `NNScaling.Ch05_DepthSDE` | Hyperfinite depth $D \in {}^*\mathbb{N}\setminus\mathbb{N}$; galaxy separation of $(N,D)$ routes ($D/N \approx 0$, $N/D \approx 0$, $\operatorname{st}(D/N)=\bar{\tau}$); Keisler–Itô Gram increment $\Delta\Phi_\ell = b(\Phi_\ell)\Delta\tau + \Sigma(\Phi_\ell)^{1/2}\Delta B_\ell + \tilde{o}_\ell(\Delta\tau)$; exit from appreciable SPD galaxy. |
-| 6. Proportional Depth–Width Topics | `tex/ch06_proportional_topics.tex` | `NNScaling.Ch06_ProportionalTopics` | Unlimited attention temperature $s = s_0\sqrt{N n_k}$; infinitesimal Hadamard perturbation for Geometric Dyson BM; hyperfinite spectral Burgers PDE ($1 \ll M \ll N$); hyperfinite forward/reverse 6-equation overlap system for one training step. |
-| Appendix A. Technical Complements | `tex/appa_technical.tex` | `NNScaling.AppendixA_Technical` | S-differentiability for transport PDE; monadic Hölder S-continuity on compacta; S-continuity & Keisler Markov-chain lifting; monadic SPD cometric; transferred one- and two-sided Gaussian conditioning. |
-
-## 4. Verification Criteria
-
-1. `latexmk -pdf` in `tex/` compiles cleanly with zero LaTeX errors, zero undefined citations, and zero undefined cross-references, producing `pdf/nn_scaling_nsa.pdf`.
-2. `lake build` and `lake query :literateHtml` succeed cleanly on Lean `v4.35.0` with no custom axioms (`sorry` permitted only as explicit typed specifications for deep stochastic/analytic theorems beyond Mathlib).
-3. All figures (`1.1`, `1.2`, `1.3`, `3.1`, `5.1`) are reproducibly generated from code/TikZ with vector output.
+| 0. Foundations & Clifford | `tex/preamble.tex`, `tex/notation.tex` | `NNScaling.Foundations`, `NNScaling.Clifford` | Hyperreal scale algebra $(\mathbb{L}, \mathbb{I}, \mathbb{A}, \operatorname{st})$, Mathlib `CliffordAlgebra Q` over $\mathbb{R}$, $\mathbb{R}^*$, and `LimitedSubring`, base-change shadow homomorphism `stCliffordHom`, bivector square $(e_1 e_2)^2 = -1$, versor reflection/rotor actions, contractions. |
+| 1. Introduction | `tex/ch01_intro.tex` | `NNScaling.Ch01_Introduction` | Infinitesimal microscope $N^\alpha({}^*L(x_N) - L_\infty) \approx c$; Loeb CLT & Anderson BM; Wigner semicircle via internal Cauchy–Dirac resolvent; Dirac divergence continuity shadow. |
+| 2. Kernel Limits: NNGP & NTK | `tex/ch02_kernels.tex` | `NNScaling.Ch02_Kernels` | Scalar-grade feature kernels $\frac{c}{N}\langle \varphi_\ell^\alpha (\varphi_\ell^\beta)^\sim \rangle_0$; Cho–Saul ReLU kernel via unit-bivector rotor $z_1 z_2 = \cos\vartheta + \sin\vartheta\,\hat{B}$ ($\hat{B}^2=-1$); Dirac tangent product $(\partial_\theta f^\alpha)^\sim(\partial_\theta f^\beta) = K^{\alpha\beta} + \Omega^{\alpha\beta}$; Hestenes blade Gaussian conditioning $(w \mathbin{\lrcorner} \bm{\Phi}_\ell)\bm{\Phi}_\ell^{-1} + (w \wedge \bm{\Phi}_\ell)\bm{\Phi}_\ell^{-1}$. |
+| 3. Double Descent | `tex/ch03_double_descent.tex` | `NNScaling.Ch03_DoubleDescent` | Design $N$-blade $\mathbf{Z} = z_1 \wedge \dots \wedge z_N \in \bigwedge^N({}^*\mathbb{R}^M)$ with Gramian $\det(Z^\top Z) = \langle \mathbf{Z}^\sim \mathbf{Z}\rangle_0$; inverse-Wishart diagonal as exterior wedge-volume ratio $\lVert g_i \wedge \bm{G}_{-i}\rVert^{-2}\lVert \bm{G}_{-i}\rVert^2$; pseudoscalar saturation $\mathbf{Z} \propto I_M$ at $\delta = 1$; $\operatorname{Pin}(N_0)$ / $\operatorname{Spin}(N_0)$ equivariance. |
+| 4. Feature Learning & Mean-Field | `tex/ch04_feature_learning.tex` | `NNScaling.Ch04_FeatureLearning` | Parameter Dirac operator $\partial_\theta \in \mathcal{C}\ell_{1+n_0}$ with $\partial_\theta^2 = \Delta_\theta$; continuity equation $\partial_t\rho_t + \langle \partial_\theta(b\rho_t)\rangle_0 = 0$; monogenic curl-free Otto–Wasserstein velocity $\partial_\theta \wedge v_t = 0$; $\mu$P scale $\frac{1}{N}\langle (\Delta h_\ell)^\sim \Delta h_\ell\rangle_0 \in \mathbb{A}$. |
+| 5. Depth Scaling & Covariance SDE | `tex/ch05_depth_sde.tex` | `NNScaling.Ch05_DepthSDE` | Keisler–Lindstrøm hyperfinite covariance SDEs along $\mathbb{T}_D$; scalar-grade fourth-moment Wick contractions in ${}^*\mathcal{C}\ell_N$; GBM log-drifts & logistic covariance blowup. |
+| 6. Proportional Depth–Width Topics | `tex/ch06_proportional_topics.tex` | `NNScaling.Ch06_ProportionalTopics` | Geometric query–key product $k^\alpha q^\beta = \langle k^\alpha q^\beta\rangle_0 + k^\alpha \wedge q^\beta$ (scalar Softmax logits + bivector rotational torque); $\operatorname{Spin}(m)$ rotor frame $d\Omega_\tau = (dR_\tau)R_\tau^\sim \in \bigwedge^2(\mathbb{R}^m)$ with $(e_i\wedge e_j)^2 = -1$ generating Dyson eigenvalue repulsion; Cauchy–Dirac Stieltjes Burgers PDE; 1-step overlap system. |
+| Appendix A. Technical Complements | `tex/appa_technical.tex` | `NNScaling.AppendixA_Technical` | Weak Dirac transport derivation; Loeb S-equicontinuity & Skorohod lifting; $\operatorname{SPD}(m)$ cometric congruence; one- and two-sided Hestenes blade Gaussian conditioning (`Lemma A.5`). |
