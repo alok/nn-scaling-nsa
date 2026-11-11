@@ -1,0 +1,465 @@
+\chapter{Feature Learning and Mean-Field Limits}
+\label{ch:feature-learning}
+
+Chapters~2 and~3 studied the kernel regime from its optimization and statistical perspectives. In this chapter we turn to feature learning: parameterizations and scaling limits in which internal representations evolve by an appreciable amount ($\in \App = \Lim \setminus \Inf$) at an unlimited width $N \in \hNinf$.
+
+Throughout the chapter, we consider a supervised dataset $\{(x^\alpha, y^\alpha)\}_{\alpha=1}^m$ with standard inputs $x^\alpha \in \R^{n_0}$ and standard targets $y^\alpha \in \R$ (for simplicity we take a scalar output). Given an internal width-$N$ network $f(\,\cdot\,; \theta)$ (suppressing the subscript $N$), we abbreviate $f^\alpha := f(x^\alpha; \theta)$ and define the squared loss
+\begin{equation}\label{eq:4.1}
+L(\theta) = \frac{1}{2m} \sum_{\alpha=1}^m \bigl(f^\alpha - y^\alpha\bigr)^2.
+\end{equation}
+We write $r^\alpha(t) := f^\alpha(t) - y^\alpha$ when a residual variable is useful and otherwise keep the difference explicit. Throughout this chapter, $m, n_0 \in \N$ are fixed standard integers while $N \in \hNinf$ is unlimited, and
+\begin{equation}\label{eq:4.2}
+\Phi_0^{\alpha\beta} := \frac{1}{n_0}\ip{x^\alpha}{x^\beta}
+\end{equation}
+denotes the standard input kernel introduced in Chapter~2.
+
+The positive hyperreal learning-rate multiplier $\eta = \eta_N \in \hR_{>0}$ is allowed to depend on the hyperfinite width $N$. For continuous-time arguments we use the internal gradient-flow convention
+\begin{equation}\label{eq:4.3}
+\partial_t \theta(t) = -\eta_N \nabla_\theta L\bigl(\theta(t)\bigr).
+\end{equation}
+Thus $\eta_N = \eta_0 N$ (with standard $\eta_0 > 0$, or more generally $\eta_0 \in \App$) denotes an $N$-accelerated internal gradient flow; equivalently, it is unit-rate internal gradient flow observed on a time scale accelerated by $N$. We do not absorb the factor $1/m$ in the loss into time.
+
+\section{One Hidden Layer: How Features Move}
+\label{sec:4.1}
+
+Throughout this section we use a one-hidden-layer network of unlimited width $N \in \hNinf$:
+\begin{equation}\label{eq:4.4}
+f(x; \theta) = \frac{1}{\gamma_N \sqrt{N}} \sum_{i=1}^N a_i\,\phi\bigl(h_i(x)\bigr), \qquad h_i(x) := \frac{1}{\sqrt{n_0}}\ip{w_i}{x}, \qquad \theta = \{(a_i, w_i)\}_{i=1}^N,
+\end{equation}
+with $(a_i, w_i) \in \hR \times \hR^{n_0}$ and standard activation $\phi : \R \to \R$ (evaluated on hyperreal arguments via its natural extension $\ns{\phi} : \hR \to \hR$, for which we continue to write $\phi$ when clear from context). Here $\gamma_N \in \hR_{>0}$ is an extra hyperreal scaling knob beyond the usual NTK prefactor $1/\sqrt{N}$: setting $\gamma_N = 1$ gives the standard (NTK) scaling, while $\gamma_N = \sqrt{N}$ gives an overall hyperfinite average prefactor $1/N$.
+
+We first make the notion of feature learning quantitative in terms of the multiplicative group of appreciable hyperreals $\App = \Lim \setminus \Inf$ and asymptotic scale equivalence $a \asymp b \iff a/b \in \App$ (equality of valuation classes in the quotient group $\hR^\times / \App$). For a fixed data point $x^\alpha$, define the (scalar) internal hidden preactivations
+\begin{equation}\label{eq:4.5}
+h_i^\alpha := h_i(x^\alpha) = \frac{1}{\sqrt{n_0}}\ip{w_i}{x^\alpha}, \qquad i = 1, \dots, N,
+\end{equation}
+and collect them into the hyperfinite width-$N$ vector $h^\alpha \in \hR^N$.
+
+\begin{definition}[Feature Learning Criterion]\label{def:4.1}
+Fix a training step $k$ and a sample $\alpha$, and write $h^\alpha(k) \in \hR^N$ for the internal vector of hidden preactivations on input $x^\alpha$. Let $\Delta h^\alpha(k) := h^\alpha(k + 1) - h^\alpha(k)$. We say that the hidden layer exhibits \emph{feature learning} at step $k$ on sample $\alpha$ if
+\begin{equation}\label{eq:4.6}
+\frac{1}{N}\norm{\Delta h^\alpha(k)}^2 \in \App.
+\end{equation}
+\end{definition}
+
+When \eqref{eq:4.6} holds we will sometimes write simply $\Delta h^\alpha(k) \asymp 1$, meaning the normalized hyperfinite squared norm above lies in $\App$. Precisely, this says that the root-mean-square coordinate change is appreciable (neither infinitesimal nor unlimited); under internal exchangeability and a nonconcentration condition, a Loeb-typical coordinate is then also appreciable.
+
+To see what the feature-learning criterion requires, consider one step of internal full-batch gradient descent with learning rate $\eta \in \hR_{>0}$:
+\begin{equation}\label{eq:4.7}
+w_i^+ = w_i - \eta\,\partial_{w_i} L, \qquad a_i^+ = a_i - \eta\,\partial_{a_i} L.
+\end{equation}
+By Transfer, a direct derivative gives
+\begin{equation}\label{eq:4.8}
+\partial_{w_i} L = \frac{1}{m}\sum_{\beta=1}^m (f^\beta - y^\beta)\,\partial_{w_i} f^\beta = \frac{1}{m}\sum_{\beta=1}^m (f^\beta - y^\beta)\frac{1}{\gamma_N\sqrt{N n_0}}\,a_i\,\phi'(h_i^\beta)\,x^\beta.
+\end{equation}
+Therefore the induced one-step change in the feature $h_i^\alpha = n_0^{-1/2}\ip{w_i}{x^\alpha}$ is
+\begin{equation}\label{eq:4.9}
+\begin{aligned}
+\Delta h_i^\alpha := h_i^{\alpha, +} - h_i^\alpha &= \frac{1}{\sqrt{n_0}}\ip{w_i^+ - w_i}{x^\alpha} \\
+&= -\frac{\eta}{m\gamma_N\sqrt{N}} \sum_{\beta=1}^m (f^\beta - y^\beta)\,a_i\,\phi'(h_i^\beta)\,\Phi_0^{\beta\alpha}.
+\end{aligned}
+\end{equation}
+Heuristically, if $(f^\beta - y^\beta) \in \App$ and the inner products and activation factors lie in $\App$ without cancellation, then in the hyperreal valuation quotient $\hR^\times / \App$,
+\begin{equation}\label{eq:4.10}
+\Delta h_i^\alpha \asymp \frac{\eta}{\gamma_N\sqrt{N}}.
+\end{equation}
+Since $h^\alpha = (h_i^\alpha)_{i=1}^N$, this gives
+\begin{equation}\label{eq:4.11}
+\frac{1}{N}\norm{\Delta h^\alpha}^2 \asymp \left(\frac{\eta}{\gamma_N\sqrt{N}}\right)^2,
+\end{equation}
+so achieving the feature-learning condition \eqref{eq:4.6} requires (at least) the valuation-group identity $\eta \asymp \gamma_N\sqrt{N}$.
+
+The same update must also move the predictor on an appreciable scale. In this chapter it is convenient to factor the output multiplier out of the tangent kernel and define the normalized empirical NTK at width $N$ by
+\begin{equation}\label{eq:4.12}
+K_t^{(N),\alpha\beta} := \frac{1}{N}\sum_{i=1}^N \phi(h_i^\alpha)\phi(h_i^\beta) + \Phi_0^{\alpha\beta}\frac{1}{N}\sum_{i=1}^N a_i^2 \phi'(h_i^\alpha)\phi'(h_i^\beta).
+\end{equation}
+Throughout this chapter, ``NTK'' refers to this normalized kernel unless the raw gradient Gram is named explicitly. Thus the raw internal gradient Gram used in Chapter~2 is $\ip{\nabla_\theta f^\alpha}{\nabla_\theta f^\beta} = \gamma_N^{-2} K_t^{(N),\alpha\beta}$. When the hyperfinite empirical averages are appreciable, the entries of $K_t^{(N)}$ lie in $\App$. Under the internal gradient-flow convention \eqref{eq:4.3}, Transfer of the chain rule shows that the predictor dynamics satisfy the exact internal identity
+\begin{equation}\label{eq:4.13}
+\partial_t f^\alpha(t) = -\frac{\eta_N}{m\gamma_N^2}\sum_{\beta=1}^m K_t^{(N),\alpha\beta} r^\beta(t),
+\end{equation}
+so the predictor speed has valuation class $[\eta_N / \gamma_N^2] \in \hR^\times / \App$. A first-order gradient-descent update has the same width scaling. Balancing appreciable feature updates ($\eta \asymp \gamma_N\sqrt{N}$) with appreciable predictor motion ($\eta \asymp \gamma_N^2$) therefore reduces to exact arithmetic in the torsion-free abelian valuation quotient $\hR^\times / \App$: from $[\eta] = [\gamma_N][\sqrt{N}]$ and $[\eta] = [\gamma_N]^2$, dividing one relation by the other uniquely selects $[\gamma_N] = [\sqrt{N}]$ and $[\eta] = [N]$, that is, $\gamma_N \asymp \sqrt{N}$ and $\eta \asymp N$.
+
+These two balance conditions distinguish three regimes:
+\begin{enumerate}
+\item \textbf{NTK (lazy) scaling.} Set $\gamma_N = 1$ and take $\eta \in \App$. Then \eqref{eq:4.10} gives $\Delta h_i^\alpha \asymp N^{-1/2} \in \Inf$, and thus
+\begin{equation}\label{eq:4.14}
+\frac{1}{N}\norm{\Delta h^\alpha}^2 \asymp N^{-1} \approx 0,
+\end{equation}
+so the features freeze up to infinitesimals at unlimited width $N$. This is the standard lazy/NTK regime.
+
+\item \textbf{Naively increasing the learning rate.} Keeping $\gamma_N = 1$ but taking $\eta \asymp \sqrt{N}$ makes $\Delta h_i^\alpha \in \App$. For squared loss this often leads to unlimited (exploding) outputs because the function-space speed in \eqref{eq:4.13} scales like $\partial_t f \asymp \sqrt{N} \notin \Lim$. However, for cross-entropy loss, it can be acceptable for the logits to become unlimited while training remains stable, because gradients can stay limited even when outputs grow; see \cite{haas2025surprising} for a careful analysis of this ``controlled divergence'' phenomenon.
+
+\item \textbf{Mean-field scaling.} Instead choose $\gamma_N = \sqrt{N}$, i.e.
+\begin{equation}\label{eq:4.15}
+f(x; \theta) = \frac{1}{N}\sum_{i=1}^N a_i\,\phi\!\left(\frac{1}{\sqrt{n_0}}\ip{w_i}{x}\right),
+\end{equation}
+and scale the learning rate as $\eta = \eta_0 N$ with $\eta_0 \in \App$. Then \eqref{eq:4.10} gives $\Delta h_i^\alpha \in \App$, hence the feature-learning condition remains $\frac{1}{N}\norm{\Delta h^\alpha}^2 \in \App$ at unlimited width $N$. At the same time, \eqref{eq:4.13} gives $\partial_t f^\alpha(t) \in \App$ at the valuation level of this calculation, so the predictor evolves on an appreciable time scale.
+\end{enumerate}
+
+At a mean-zero random initialization, $f(x)$ is typically of scale $N^{-1/2} \approx 0$ for fixed standard $x$. This infinitesimal initialization scale is secondary to the balance above: because nonzero targets satisfy $y^\alpha \in \R \setminus \{0\} \subset \App$, the initial residual $f^\alpha - y^\alpha \approx -y^\alpha$ remains appreciable.
+
+\begin{table}[t]
+\centering
+\begin{tabular}{@{}llll@{}}
+\toprule
+Regime & Output prefactor & $\eta$ scaling & Feature update $\Delta h_i^\alpha$ \\
+\midrule
+NTK (lazy) & $1/\sqrt{N}$ ($\gamma_N = 1$) & $\in \App$ & $\asymp N^{-1/2} \approx 0$ \\
+Naive large-$\eta$ & $1/\sqrt{N}$ ($\gamma_N = 1$) & $\asymp \sqrt{N}$ & $\in \App$ \\
+Mean-field & $1/N$ ($\gamma_N = \sqrt{N}$) & $\asymp N$ & $\in \App$ \\
+\bottomrule
+\end{tabular}
+\caption{A quick scaling comparison in $\hR^\times / \App$ for the one-hidden-layer network at unlimited width $N \in \hNinf$.}
+\label{tab:4.1}
+\end{table}
+
+\section{Mean-Field ODE: An Interacting Particle System}
+\label{sec:4.2}
+
+With mean-field scaling, the internal parameters $(a_i, w_i)$ behave like a hyperfinite interacting particle system. To emphasize this, it is convenient to encode all $N$ neurons via an internal empirical measure and its standard Loeb pushforward.
+
+\begin{definition}[Empirical Measure of Neurons]\label{def:4.2}
+For the one-hidden-layer network \eqref{eq:4.4} at width $N \in \hNinf$, write $\Theta := \R \times \R^{n_0}$ for standard single-neuron parameter space and $\ns{\Theta} = \hR \times \hR^{n_0}$ for its internal extension. Define the internal empirical measure on $\ns{\Theta}$ by
+\begin{equation}\label{eq:4.16}
+\rho^{(N)} := \frac{1}{N}\sum_{i=1}^N \delta_{(a_i, w_i)}.
+\end{equation}
+Whenever the Loeb measure $L(\rho^{(N)})$ concentrates on the nearstandard galaxy $\Lim \times \Lim^{n_0} \subset \ns{\Theta}$, its standard pushforward $\rho := L(\rho^{(N)}) \circ \st^{-1}$ defines a Borel probability measure on $\Theta$ \cite{loeb1975conversion}.
+\end{definition}
+
+With mean-field scaling ($\gamma_N = \sqrt{N}$), the internal network output can be written as
+\begin{equation}\label{eq:4.17}
+f(x; \theta) = \int_{\ns{\Theta}} a\,\phi\!\left(\frac{1}{\sqrt{n_0}}\ip{w}{x}\right) \rho^{(N)}(da\,dw).
+\end{equation}
+With $\eta_N = \eta_0 N$ (for standard $\eta_0 > 0$), the convention \eqref{eq:4.3} gives the accelerated internal gradient flow
+\begin{equation}\label{eq:4.18}
+\frac{d}{dt}(a_i, w_i) = -\eta_0 N\,\nabla_{(a_i, w_i)} L.
+\end{equation}
+Using the internal dynamics \eqref{eq:4.18} (and differentiating the network output \eqref{eq:4.4} by Transfer), one finds an internal ODE system of the form
+\begin{equation}\label{eq:4.19}
+\frac{d}{dt}(a_i, w_i) = b\bigl((a_i, w_i), \rho_t^{(N)}\bigr), \qquad \rho_t^{(N)} := \frac{1}{N}\sum_{j=1}^N \delta_{(a_j(t), w_j(t))},
+\end{equation}
+where the internal velocity field $b(\theta, \rho)$ depends on the population only through the prediction functional $f_\rho(x) = \int a\,\phi(n_0^{-1/2}\ip{w}{x})\,\rho(da\,dw)$. Thus each hyperfinite ``particle'' is driven by the internal empirical distribution of all $N$ particles.
+
+Passing from this hyperfinite interacting particle system to a deterministic standard limit rests on propagation of chaos: at unlimited width $N \in \hNinf$, the shadows of any fixed standard number $k \in \N$ of neurons are genuinely independent and identically distributed under the Loeb measure $\Loeb$, with common deterministic law $\rho_t = L(\rho_t^{(N)}) \circ \st^{-1}$.
+
+\begin{definition}[Chaos]\label{def:4.3}
+Fix a standard time $t \ge 0$, and let $\theta_i^{(N)}(t) = (a_i(t), w_i(t)) \in \ns{\Theta}$ denote the internal particle parameters under the mean-field gradient flow \eqref{eq:4.19} on an internal probability space $(\Omega, \mathcal{A}, \hP)$ with Loeb extension $\Loeb$. Let $P_t^{(N)}$ be the internal joint law of $(\theta_1^{(N)}(t), \dots, \theta_N^{(N)}(t)) \in \ns{\Theta}^N$, assumed nearstandardly concentrated ($\theta_i^{(N)}(t) \in \Lim \times \Lim^{n_0}$ $\Loeb$-almost surely), and let $\rho_t$ be a deterministic Borel probability measure on $\Theta$. We say that $P_t^{(N)}$ is \emph{$\rho_t$-chaotic} if for every standard $k \in \N$, the shadow tuple $\bigl(\st(\theta_1^{(N)}(t)), \dots, \st(\theta_k^{(N)}(t))\bigr) \in \Theta^k$ has law $\rho_t^{\otimes k}$ under $\Loeb$; equivalently, for every bounded continuous standard test function $\psi : \Theta^k \to \R$,
+\begin{equation}\label{eq:4.20}
+\begin{aligned}
+\st\,\hE\Bigl[\ns{\psi}\bigl(\theta_1^{(N)}(t), \dots, \theta_k^{(N)}(t)\bigr)\Bigr] &= \EL\Bigl[\psi\bigl(\st(\theta_1^{(N)}(t)), \dots, \st(\theta_k^{(N)}(t))\bigr)\Bigr] \\
+&= \int_{\Theta^k} \psi(\theta_1, \dots, \theta_k)\,\rho_t^{\otimes k}(d\theta_1 \cdots d\theta_k).
+\end{aligned}
+\end{equation}
+We say that the particle system \emph{propagates chaos} on a standard time interval if there exists a deterministic family $(\rho_t)$ such that $P_t^{(N)}$ is $\rho_t$-chaotic for every standard $t$ in that interval.
+\end{definition}
+
+Under standard well-posedness assumptions on the McKean--Vlasov interaction field (e.g.\ $\phi$ is $C^1$ with bounded Lipschitz derivative, the data are bounded, and $\rho_0$ has suitable moments), one can show that for every standard finite time horizon $T > 0$ there exists a unique deterministic solution $(\rho_t)_{t \in [0, T]}$ of the mean-field PDE in Definition~\ref{def:4.4}, and the hyperfinite particle system \eqref{eq:4.19} propagates chaos on $[0, T]$: for every standard $t \in [0, T]$, the Loeb pushforward $L(\rho_t^{(N)}) \circ \st^{-1}$ equals $\rho_t$ $\Loeb$-almost surely, and for each standard $k \in \N$, the $k$-particle shadow has law $\rho_t^{\otimes k}$. Quantitative internal bounds (often $\ns{W}_2(\rho_t^{(N)}, \ns{\rho}_t) = O(N^{-1/2}) \approx 0$ in transferred Wasserstein distance) hold under Lipschitz interactions.
+
+Propagation of chaos is helpful because it upgrades the heuristic ``replace the empirical measure by its shadow'' into an exact Loeb-measure identity: at unlimited width $N$, the shadows of finitely many neurons are i.i.d.\ samples from $\rho_t$, and standard macroscopic observables (the shadow predictor $\st(f(x; \theta(t))) = f_{\rho_t}(x)$, risks, kernels, etc.) become deterministic functionals of $\rho_t$. This is exactly the point of the mean-field framework: it replaces a hyperfinite system of $N$ coupled internal ODEs by a single deterministic measure-valued evolution on $\Theta$ that can be analyzed using PDE and optimal-transport techniques. See, e.g., \cite{sznitman1991topics,jabin2018quantitative,chaintron2022propagation} and, for a treatment tailored to mean-field neural networks beyond logarithmic time, \cite{glasgow2025propagation}.
+
+\section{Mean-Field PDE and Wasserstein Gradient Flow}
+\label{sec:4.3}
+
+The internal empirical measure $\rho_t^{(N)}$ from Definition~\ref{def:4.2} satisfies an exact internal transport identity. Taking the standard part via the Loeb pushforward $\rho_t := L(\rho_t^{(N)}) \circ \st^{-1}$ yields a deterministic PDE on $\Theta = \R \times \R^{n_0}$.
+
+\begin{definition}[Mean-Field Transport PDE]\label{def:4.4}
+Let $\rho_t$ be a time-dependent Borel probability measure on $\Theta = \R \times \R^{n_0}$. Define the mean-field predictor
+\begin{equation}\label{eq:4.21}
+f_{\rho_t}(x) := \int_\Theta a\,\phi\!\left(\frac{1}{\sqrt{n_0}}\ip{w}{x}\right) \rho_t(da\,dw),
+\end{equation}
+and the velocity field $b(\theta, \rho_t)$ for $\theta = (a, w) \in \Theta$ by
+\begin{equation}\label{eq:4.22}
+b(\theta, \rho_t) := -\frac{\eta_0}{m}\sum_{\alpha=1}^m \bigl(f_{\rho_t}(x^\alpha) - y^\alpha\bigr)
+\begin{bmatrix}
+\phi\bigl(n_0^{-1/2}\ip{w}{x^\alpha}\bigr) \\[0.4em]
+n_0^{-1/2} a\,\phi'\bigl(n_0^{-1/2}\ip{w}{x^\alpha}\bigr)\,x^\alpha
+\end{bmatrix}.
+\end{equation}
+The \emph{mean-field PDE} is the continuity equation
+\begin{equation}\label{eq:4.23}
+\partial_t \rho_t = -\nabla_{(a, w)} \cdot \bigl(b(\,\cdot\,, \rho_t)\rho_t\bigr),
+\end{equation}
+interpreted in the weak sense.
+\end{definition}
+
+To derive the weak formulation directly from the hyperfinite system, let $q : \Theta \to \R$ be a smooth compactly supported standard test function, with natural extension $\ns{q} : \ns{\Theta} \to \hR$. By Transfer of the chain rule, for the internal empirical measure $\rho_t^{(N)} = \frac{1}{N}\sum_{i=1}^N \delta_{\theta_i(t)}$,
+\begin{equation}\label{eq:4.24}
+\frac{d}{dt}\int_{\ns{\Theta}} \ns{q}(\theta)\,\rho_t^{(N)}(d\theta) = \frac{1}{N}\sum_{i=1}^N \ip{\ns{\nabla q}\bigl(\theta_i(t)\bigr)}{\partial_t \theta_i(t)}.
+\end{equation}
+Using the internal McKean--Vlasov form \eqref{eq:4.19}, this becomes the exact internal identity
+\begin{equation}\label{eq:4.25}
+\frac{d}{dt}\int_{\ns{\Theta}} \ns{q}\,d\rho_t^{(N)} = \int_{\ns{\Theta}} \ip{\ns{\nabla q}(\theta)}{b\bigl(\theta, \rho_t^{(N)}\bigr)}\,\rho_t^{(N)}(d\theta).
+\end{equation}
+Because $q$ has compact support in $\Theta$, $\ns{\nabla q}$ vanishes outside a bounded nearstandard set on which $\ns{\nabla q}(\theta) \approx \nabla q(\st(\theta))$ and $b(\theta, \rho_t^{(N)}) \approx b(\st(\theta), \rho_t)$ whenever $f_{\rho_t^{(N)}}(x^\alpha) \approx f_{\rho_t}(x^\alpha)$. Taking the standard part of the internal time derivative \eqref{eq:4.25} (via S-differentiability of $\int \ns{q}\,d\rho_t^{(N)}$; see Appendix~A) and pushing forward $L(\rho_t^{(N)})$ by $\st$ onto $\rho_t = L(\rho_t^{(N)}) \circ \st^{-1}$ yields the weak formulation
+\begin{equation}\label{eq:4.26}
+\frac{d}{dt}\int_\Theta q\,d\rho_t = \int_\Theta \ip{\nabla q(\theta)}{b(\theta, \rho_t)}\,\rho_t(d\theta).
+\end{equation}
+An integration by parts in \eqref{eq:4.26} recovers the divergence form \eqref{eq:4.23}.
+
+The same transport equation also has a Wasserstein gradient-flow interpretation. Define the functional on measures
+\begin{equation}\label{eq:4.27}
+F(\rho) := \frac{1}{2m}\sum_{\alpha=1}^m \bigl(f_\rho(x^\alpha) - y^\alpha\bigr)^2.
+\end{equation}
+The mean-field dynamics can be viewed as the $W_2$-gradient flow of $F$ in the space of probability measures, in the sense of Otto's calculus: the continuity equation \eqref{eq:4.23} has the form $\partial_t \rho_t + \nabla \cdot (\rho_t v_t) = 0$ with velocity field $v_t(\theta) = -\eta_0 \nabla_\theta\bigl(\delta F / \delta \rho\bigr)(\theta)$. This is the same structure that underlies the Jordan--Kinderlehrer--Otto scheme \cite{jordan1998variational} and the general theory of metric-space gradient flows \cite{ambrosio2005gradient}.
+
+The standard mean-field picture for two-layer networks emerged from several essentially concurrent papers between 2017 and 2020. Under an overall $1/N$ output scaling, these works viewed the network as an interacting particle system in parameter space whose empirical measure shadows a deterministic transport PDE with a Wasserstein gradient-flow interpretation. In particular, the perspectives in Nitanda and Suzuki \cite{nitanda2017stochastic}, Rotskoff and Vanden-Eijnden \cite{rotskoff2018neural}, Mei--Montanari--Nguyen \cite{mei2018mean}, Chizat and Bach \cite{chizat2018global}, and Sirignano and Spiliopoulos \cite{sirignano2020mean} (first posted on arXiv in 2018) are strikingly aligned despite emphasizing different tools and goals. This rapid convergence is one reason the ``neurons as particles'' framework became a natural organizing principle for shallow feature learning.
+
+\begin{remark}[Permutation Invariance in Deep Networks]\label{rem:4.5}
+A one-hidden-layer network is invariant under internal permutations of the $N$ neurons: relabeling $(a_i, w_i)$ does not change $f$. The empirical-measure description in Definition~\ref{def:4.2} is essentially the quotient by this symmetry.
+
+For deep networks, there are independent internal permutations in each hidden layer, and the natural objects are distributions over layerwise paths through the network, or equivalently increasingly structured exchangeable arrays. This rapidly pushes us beyond the classical McKean--Vlasov setting and explains why the shallow mean-field PDE does not straightforwardly generalize to deep feature learning.
+\end{remark}
+
+Tracking deep training dynamics at unlimited width therefore requires additional machinery. One such tool is dynamical mean field theory (DMFT), which we sketch in Section~\ref{sec:4.5} after introducing the maximal-update scaling.
+
+\section{Maximal Update and the \texorpdfstring{$\mu$P}{muP} Parameterization}
+\label{sec:4.4}
+
+Mean-field scaling in deep networks admits multiple inequivalent ways to distribute width-dependent hyperreal factors across layers and to scale learning rates. The $\mu$P framework (also called maximal update parameterization) provides a systematic way to choose these scalings so that representation learning persists at unlimited width $N \in \hNinf$ \cite{yang2021tensor,yang2022tensor}. (A personal note: I am not particularly attached to the naming ``$\mu$P''---the term maximal update captures the core idea perfectly well.)
+
+Consider a standard depth-$d$ ($d \in \N$) fully-connected network with $d$ hidden layers of unlimited width $N \in \hNinf$, internal forward preactivations $h_\ell(x) \in \hR^N$, and postactivations $\phi_\ell(x) := \phi\bigl(h_\ell(x)\bigr)$:
+\begin{align}
+f(x; \theta) &= \frac{1}{\gamma_N\sqrt{N}} W_d \phi_d(x), \label{eq:4.28} \\
+h_{\ell+1}(x) &= \frac{1}{\sqrt{N}} W_\ell \phi_\ell(x), \qquad \ell = 1, \dots, d - 1, \label{eq:4.29} \\
+h_1(x) &= \frac{1}{\sqrt{n_0}} W_0 x. \label{eq:4.30}
+\end{align}
+We take internal weight matrices $W_0 \in \hR^{N \times n_0}$, $W_\ell \in \hR^{N \times N}$ for $1 \le \ell \le d - 1$, and $W_d \in \hR^{1 \times N}$. These are raw weight coordinates: the width-dependent multipliers are displayed explicitly in \eqref{eq:4.28}--\eqref{eq:4.30}, and the same hyperreal learning-rate multiplier $\eta \in \hR_{>0}$ is applied to every raw weight matrix. A standard choice is i.i.d.\ internal Gaussian initialization $[W_\ell(0)]_{ij} \sim \hNcal(0, 1)$ (internally independent across entries and layers), together with a global learning-rate scaling that we derive below in $\hR^\times / \App$.
+
+The activation function does not change the width valuation of the scaling analysis below, as long as $\phi$ and $\phi'$ take appreciable values on the typical nearstandard scale of preactivations; it mainly contributes appreciable multiplicative factors in $\App$ and modifies the standard shadow kernels.
+
+To formulate maximal update at the representation level, we isolate the contribution to the next-layer preactivations coming only from the previous layer's weight update.
+
+\begin{definition}[Maximal Feature Update Criterion]\label{def:4.6}
+Fix $\ell \in \{1, \dots, d\}$ and consider one internal gradient-based update step producing a weight increment $\Delta W_{\ell-1}$. Define the induced change in the layer-$\ell$ preactivations coming only from $W_{\ell-1}$ by
+\begin{equation}\label{eq:4.31}
+\Delta_{W_{\ell-1}} h_\ell(x) :=
+\begin{cases}
+\dfrac{1}{\sqrt{n_0}} \Delta W_0 x, & \ell = 1, \\[0.7em]
+\dfrac{1}{\sqrt{N}} \Delta W_{\ell-1} \phi_{\ell-1}(x), & 2 \le \ell \le d.
+\end{cases}
+\end{equation}
+We say the parameterization achieves a \emph{maximal update at layer $\ell$} if, for typical training inputs and steps,
+\begin{equation}\label{eq:4.32}
+\frac{1}{N}\norm{\Delta_{W_{\ell-1}} h_\ell(x^\alpha)}^2 \in \App.
+\end{equation}
+If \eqref{eq:4.32} holds simultaneously for all layers $\ell = 1, \dots, d$ (with a single consistent valuation class of $\gamma_N$ and learning-rate hyperparameters), we say that the network satisfies the \emph{maximal feature update criterion}. This is the operational layerwise condition used below; output stability will select the corresponding maximal-update/$\mu$P scaling.
+\end{definition}
+
+Besides quantifying representation motion, the maximal-update criterion also explains when the NTK shadow itself can evolve. In the lazy/NTK regime, the empirical forward feature kernels $\Phi_\ell^{(N),\alpha\beta}(t)$ remain infinitesimally close to their initialization ($\Delta \Phi_\ell^{(N),\alpha\beta}(t) \approx 0$), so the NTK freezes to its initial shadow. In contrast, let $G_\ell^{(N),\alpha\beta}(t)$ denote the internal empirical backward kernels formed from the scaled sensitivities introduced below, with $G_{d+1}^{(N),\alpha\beta}(t) := 1$. Consistently with the shallow convention above, define the normalized empirical NTK by the exact internal decomposition (by Transfer of the chain rule)
+\begin{equation}\label{eq:4.33}
+K_t^{(N),\alpha\beta} := \sum_{\ell=0}^d G_{\ell+1}^{(N),\alpha\beta}(t)\,\Phi_\ell^{(N),\alpha\beta}(t).
+\end{equation}
+Because the sensitivities below contain an additional factor $\gamma_N$ relative to those in Chapter~2, the raw gradient Gram is $\gamma_N^{-2} K_t^{(N)}$. Consequently, under \eqref{eq:4.3}, the exact internal predictor evolution is
+\begin{equation}\label{eq:4.34}
+\partial_t f^\alpha(t) = -\frac{\eta_N}{m\gamma_N^2}\sum_{\beta=1}^m K_t^{(N),\alpha\beta} r^\beta(t).
+\end{equation}
+Thus $K_t^{(N)}$ can have a nonvanishing appreciable shadow even when the raw gradient Gram is infinitesimal, while the ratio $\eta_N / \gamma_N^2$ controls the output time scale. The maximal-update condition \eqref{eq:4.32} keeps the feature changes induced by each layer's weight update in $\App$, allowing the corresponding $\Phi_\ell$ shadows to evolve by appreciable amounts. When these $\Phi_\ell$ evolve, each layer's contribution to the normalized NTK shadow can evolve as well, enabling a genuinely non-kernel limit. The reduction to a kernel method relies on a kernel function fixed independently of the training data and unchanged up to infinitesimals throughout optimization. Once feature learning produces a nontrivial evolution of the shadow tangent kernel, this fixed-kernel reduction no longer applies.
+
+We now give a valuation-group calculation in $\hR^\times / \App$ showing how $\gamma_N$ and the learning-rate scaling must be chosen so that (i) the network function evolves at appreciable ($\in \App$) speed and (ii) each hidden layer satisfies maximal update in the sense of Definition~\ref{def:4.6}. We perform the calculation for GD; for SGD the width valuation class is the same (batch-size factors lie in $\App$ and do not change valuation classes in $\hR^\times / \App$). We organize the calculation into six steps.
+
+\paragraph{Step 1: Setup.} For notational clarity, consider a single sample $(x, y)$ and the per-sample squared loss
+\begin{equation}\label{eq:4.35}
+L(\theta) = \frac{1}{2}\bigl(f(x; \theta) - y\bigr)^2.
+\end{equation}
+Let the residual be $r := f(x; \theta) - y$, which we treat as appreciable ($r \in \App$) since generic nonzero targets satisfy $y \in \App$. Write the forward postactivations as $\phi_\ell = \phi(h_\ell)$.
+
+For the backward pass, it is convenient in the $\mu$P setting to absorb the output scale factor $\gamma_N$ into the backpropagated signal. Define the $\mu$P-scaled internal backward sensitivity by
+\begin{equation}\label{eq:4.36}
+g_\ell := \gamma_N \sqrt{N}\,\frac{\partial f}{\partial h_\ell} \in \hR^N.
+\end{equation}
+(Compared to the Chapter~2 normalization $\sqrt{N}\,\partial f / \partial h_\ell$, this inserts an extra factor of $\gamma_N$; the benefit is that $g_\ell$ stays appreciable under $\mu$P scaling.)
+
+Under the scaling \eqref{eq:4.28}--\eqref{eq:4.30}, Transfer gives the exact internal backpropagation recursion
+\begin{equation}\label{eq:4.37}
+g_\ell = \frac{1}{\sqrt{N}}\diag\bigl(\phi'(h_\ell)\bigr) W_\ell^\top g_{\ell+1}, \qquad \ell = d - 1, \dots, 1,
+\end{equation}
+with top boundary
+\begin{equation}\label{eq:4.38}
+g_d = \gamma_N \sqrt{N}\,\frac{\partial}{\partial h_d}\!\left(\frac{1}{\gamma_N\sqrt{N}} W_d \phi(h_d)\right) = W_d^\top \odot \phi'(h_d),
+\end{equation}
+so the typical-coordinate valuation class of $g_\ell$ is the same at every layer under stable wide-limit forward and backward signal propagation. We record this condition in normalized root-mean-square form:
+\begin{equation}\label{eq:4.39}
+\frac{1}{N}\norm{g_\ell}^2 \in \App, \qquad \ell = 1, \dots, d.
+\end{equation}
+
+\paragraph{Step 2: Gradient Magnitudes.} Since $L = \frac{1}{2}r^2$, we have $\nabla_\theta L = r\,\nabla_\theta f$. For $1 \le \ell \le d - 1$, using $h_{\ell+1} = \frac{1}{\sqrt{N}}W_\ell \phi_\ell$,
+\begin{equation}\label{eq:4.40}
+\nabla_{W_\ell} f = \frac{1}{\sqrt{N}}\left(\frac{\partial f}{\partial h_{\ell+1}}\right)\phi_\ell^\top = \frac{1}{\gamma_N N} g_{\ell+1}\phi_\ell^\top,
+\end{equation}
+so a generic coordinate of $\nabla_{W_\ell} L$ has valuation class
+\begin{equation}\label{eq:4.41}
+[\nabla_{W_\ell} L]_{ij} = \frac{r}{\gamma_N N} g_{\ell+1, i}\phi_{\ell, j} \asymp \frac{1}{\gamma_N N},
+\end{equation}
+since $r \in \App$, $\phi_{\ell, j} \in \App$, and a typical coordinate $g_{\ell+1, i} \in \App$ by \eqref{eq:4.39}. Thus an SGD/GD update with learning rate $\eta$ satisfies
+\begin{equation}\label{eq:4.42}
+[\Delta W_\ell]_{ij} \asymp \frac{\eta}{\gamma_N N}.
+\end{equation}
+
+\paragraph{Step 3: Maximal Update Condition.} Now consider the layerwise preactivation change from \eqref{eq:4.31}:
+\begin{equation}\label{eq:4.43}
+\Delta_{W_\ell} h_{\ell+1} = \frac{1}{\sqrt{N}}\Delta W_\ell \phi_\ell.
+\end{equation}
+Using that in this single-sample GD step $\Delta W_\ell = -\eta\,\nabla_{W_\ell} L$ is proportional to the outer product $g_{\ell+1}\phi_\ell^\top$, we obtain componentwise
+\begin{equation}\label{eq:4.44}
+[\Delta_{W_\ell} h_{\ell+1}]_i = \frac{1}{\sqrt{N}}\sum_{j=1}^N [\Delta W_\ell]_{ij}\phi_{\ell, j} = -\frac{\eta r}{\sqrt{N}}\frac{1}{\gamma_N N} g_{\ell+1, i}\sum_{j=1}^N \phi_{\ell, j}^2.
+\end{equation}
+Since $\frac{1}{N}\sum_{j=1}^N \phi_{\ell, j}^2 \in \App$, the hyperfinite sum satisfies $\sum_{j=1}^N \phi_{\ell, j}^2 \asymp N$ and thus
+\begin{equation}\label{eq:4.45}
+[\Delta_{W_\ell} h_{\ell+1}]_i \asymp \frac{\eta}{\sqrt{N}}\frac{1}{\gamma_N} g_{\ell+1, i} \asymp \frac{\eta}{\gamma_N\sqrt{N}}.
+\end{equation}
+Therefore
+\begin{equation}\label{eq:4.46}
+\frac{1}{N}\norm{\Delta_{W_\ell} h_{\ell+1}}^2 \asymp \frac{\eta^2}{\gamma_N^2 N},
+\end{equation}
+and enforcing the maximal-update criterion \eqref{eq:4.32} in $\hR^\times / \App$ requires
+\begin{equation}\label{eq:4.47}
+\eta \asymp \gamma_N\sqrt{N}.
+\end{equation}
+
+\paragraph{Step 4: Input Boundary.} The first weight matrix has the exact internal derivative
+\begin{equation}\label{eq:4.48}
+\nabla_{W_0} f = \frac{1}{\gamma_N\sqrt{N n_0}} g_1 x^\top.
+\end{equation}
+Consequently, for the single-sample update used here,
+\begin{equation}\label{eq:4.49}
+\Delta_{W_0} h_1 = -\frac{\eta r}{\gamma_N\sqrt{N}} g_1 \frac{\norm{x}^2}{n_0} \asymp \frac{\eta}{\gamma_N\sqrt{N}}
+\end{equation}
+when $n_0^{-1}\norm{x}^2 \in \App$. Thus the same maximal-update constraint \eqref{eq:4.47} applies at the input boundary as at every internal hidden layer.
+
+\paragraph{Step 5: Stable Function-Space Dynamics.} We also require that the output itself changes on an appreciable ($\in \App$) scale. Consider the contribution coming from the output weights $W_d$. Since $f(x) = \frac{1}{\gamma_N\sqrt{N}}W_d\phi_d$, we have
+\begin{equation}\label{eq:4.50}
+\nabla_{W_d} f = \frac{1}{\gamma_N\sqrt{N}}\phi_d^\top, \qquad \Longrightarrow \qquad [\nabla_{W_d} L]_j \asymp \frac{r}{\gamma_N\sqrt{N}} \asymp \frac{1}{\gamma_N\sqrt{N}}.
+\end{equation}
+Thus $[\Delta W_d]_j \asymp \eta / (\gamma_N\sqrt{N})$ and the resulting change in the output is
+\begin{equation}\label{eq:4.51}
+\Delta f = \frac{1}{\gamma_N\sqrt{N}}\Delta W_d \phi_d = -\frac{\eta r}{\gamma_N^2 N}\sum_{j=1}^N \phi_{d, j}^2 \asymp \frac{\eta}{\gamma_N^2},
+\end{equation}
+using again that $\frac{1}{N}\sum_{j=1}^N \phi_{d, j}^2 \in \App$. To keep $\Delta f \in \App$ we therefore need
+\begin{equation}\label{eq:4.52}
+\eta \asymp \gamma_N^2.
+\end{equation}
+
+\paragraph{Step 6: Solving the Scaling Constraints.} Combining \eqref{eq:4.52} and \eqref{eq:4.47} in the valuation group $\hR^\times / \App$ ($\gamma_N^2 \asymp \gamma_N\sqrt{N}$) uniquely yields
+\begin{equation}\label{eq:4.53}
+\gamma_N \asymp \sqrt{N}, \qquad \eta \asymp N.
+\end{equation}
+Equivalently, the overall output prefactor has valuation class $1 / (\gamma_N\sqrt{N}) \asymp 1/N$ (and equals $1/N$ when $\gamma_N = \sqrt{N}$), and the learning rate is scaled up by $N$. This is the basic $\mu$P/maximal-update scaling for MLPs.
+
+\begin{remark}[Shallow Mean Field as the $d = 1$ Case]\label{rem:4.7}
+For $d = 1$, identify $a_i = (W_d)_{1i}$ and let $w_i^\top$ be the $i$th row of $W_0$. Then \eqref{eq:4.28}--\eqref{eq:4.30} is exactly the shallow model \eqref{eq:4.4}:
+\begin{equation}\label{eq:4.54}
+f(x) = \frac{1}{\gamma_N\sqrt{N}}\sum_{i=1}^N a_i\,\phi\!\left(\frac{1}{\sqrt{n_0}}\ip{w_i}{x}\right).
+\end{equation}
+Hence $\gamma_N = \sqrt{N}$ and the common raw learning-rate multiplier $\eta = \eta_0 N$ recover the shallow mean-field parameterization and hyperfinite particle dynamics \eqref{eq:4.19} exactly \cite{yang2021tensor}.
+\end{remark}
+
+\begin{remark}[Generality]\label{rem:4.8}
+The maximal-update/$\mu$P philosophy extends far beyond fully-connected MLPs: one can, in principle, derive analogous width-dependent valuation classes in $\hR^\times / \App$ for other architectures (CNNs, attention, residual connections, etc.) and for other training algorithms (Adam, momentum, weight decay, etc.). But each new setting requires its own calculation, because the relevant forward/backward signal propagation and parameter grouping changes.
+\end{remark}
+
+\section{A Sketch of DMFT for Deep Feature Learning}
+\label{sec:4.5}
+
+The deep $\mu$P scaling does not collapse to a deterministic PDE like the shallow mean-field limit. Instead, a representative forward/backward coordinate remains stochastic at unlimited width $N \in \hNinf$, while its statistics close through deterministic time-dependent kernel order parameters. Dynamical mean field theory (DMFT) provides this reduced description. We follow the infinite-width self-consistent DMFT of Bordelon and Pehlevan \cite[Secs.~2--3 and App.~D.7]{bordelon2022self}; their later work develops finite-width fluctuations around this limit \cite{bordelon2023dynamics}.
+
+We begin by introducing the internal state variables and kernels whose shadows close the limiting dynamics. At hyperfinite width $N \in \hNinf$, let $h_\ell^\alpha(t) = (h_{\ell, i}^\alpha(t))_{i=1}^N \in \hR^N$ denote the internal forward preactivations at layer $\ell$ on input $x^\alpha$. For the backward pass, use the $\mu$P-scaled internal sensitivity
+\begin{equation}\label{eq:4.55}
+g_\ell^\alpha(t) := \gamma_N \sqrt{N}\,\frac{\partial f^\alpha(t)}{\partial h_\ell^\alpha(t)} = \bigl(g_{\ell, i}^\alpha(t)\bigr)_{i=1}^N \in \hR^N,
+\end{equation}
+together with the pre-activation backward drive $z_\ell^\alpha(t) = (z_{\ell, i}^\alpha(t))_{i=1}^N \in \hR^N$ defined by $z_\ell^\alpha(t) := \frac{1}{\sqrt{N}}W_\ell(t)^\top g_{\ell+1}^\alpha(t)$ for $1 \le \ell \le d - 1$ and $z_d^\alpha(t) := W_d(t)^\top$, so that $g_{\ell, i}^\alpha(t) = \phi'(h_{\ell, i}^\alpha(t))\,z_{\ell, i}^\alpha(t)$, whose typical coordinates lie in $\App$ under the stable scaling assumptions of Section~\ref{sec:4.4}. We reserve the superscript $(N)$ for hyperfinite empirical kernels.
+
+The hyperfinite-width two-time feature and gradient kernels are
+\begin{equation}\label{eq:4.56}
+\Phi_\ell^{(N),\alpha\beta}(t, s) := \frac{1}{N}\ip{\phi\bigl(h_\ell^\alpha(t)\bigr)}{\phi\bigl(h_\ell^\beta(s)\bigr)}, \qquad G_\ell^{(N),\alpha\beta}(t, s) := \frac{1}{N}\ip{g_\ell^\alpha(t)}{g_\ell^\beta(s)}.
+\end{equation}
+Their diagonal $t = s$ agrees with the empirical kernels used above. DMFT also introduces standard response (or susceptibility) kernels $A_\ell$ and $B_\ell$, defined below.
+
+With this notation in place, we can realize the single-site DMFT process concretely via Loeb sampling. Fix $\gamma_N = \gamma_0 \sqrt{N}$ with standard $\gamma_0 > 0$ (or $\gamma_N \asymp \sqrt{N}$ with $\gamma_0 := \st(\gamma_N / \sqrt{N}) \in (0, \infty)$) and the stable learning-rate scale $\eta_N \asymp \gamma_N^2$ (Section~\ref{sec:4.4}). If $u$ denotes physical time under \eqref{eq:4.3}, define macroscopic time by $t := \eta_N u / (m\gamma_N^2)$. At standard depth $d$, standard sample size $m$, and over a standard finite time horizon, draw a neuron index $\iota \in \{1, \dots, N\}$ from the Loeb uniform measure $L(\nu_N)$ on $\{1, \dots, N\}$ (where $\nu_N(E) = \abs{E}/N$, independent of initialization). On the product Loeb space $\Loeb \otimes L(\nu_N)$, we identify the limiting single-site process \cite[Eqs.~(9)--(10)]{bordelon2022self} with the standard shadow trajectory
+\[
+\Bigl(\st\bigl(h_{\ell, \iota}^\alpha(t)\bigr),\; \st\bigl(z_{\ell, \iota}^\alpha(t)\bigr),\; \st\bigl(g_{\ell, \iota}^\alpha(t)\bigr)\Bigr),
+\]
+which from this point onward we denote simply by $\bigl(h_\ell^\alpha(t), z_\ell^\alpha(t), g_\ell^\alpha(t)\bigr)$. Here \emph{single site} is statistical-physics language for the effective process associated with one Loeb-typical neuron index $\iota$ after the influence of all other neurons has been summarized by the deterministic shadow kernels. In probabilistic language, this is a representative mean-field particle---more precisely here, its coupled forward/backward shadow trajectory across data examples and training times.
+
+For $1 \le \ell \le d$ and standard $t \ge 0$, the representative shadow process satisfies
+\begin{align}
+h_\ell^\alpha(t) &= u_\ell^\alpha(t) + \gamma_0 \int_0^t \sum_{\beta=1}^m \Bigl[A_{\ell-1}^{\alpha\beta}(t, s) - \Phi_{\ell-1}^{\alpha\beta}(t, s)\,r^\beta(s)\Bigr] g_\ell^\beta(s)\,ds, \label{eq:4.57} \\
+z_\ell^\alpha(t) &= v_\ell^\alpha(t) + \gamma_0 \int_0^t \sum_{\beta=1}^m \Bigl[B_\ell^{\alpha\beta}(t, s) - G_{\ell+1}^{\alpha\beta}(t, s)\,r^\beta(s)\Bigr] \phi\bigl(h_\ell^\beta(s)\bigr)\,ds, \label{eq:4.58} \\
+g_\ell^\alpha(t) &= \phi'\bigl(h_\ell^\alpha(t)\bigr)\,z_\ell^\alpha(t). \label{eq:4.59}
+\end{align}
+Here $u_\ell$ and $v_\ell$ are independent centered standard Gaussian drives on the Loeb space with covariances
+\begin{equation}\label{eq:4.60}
+\E\bigl[u_\ell^\alpha(t)\,u_\ell^\beta(s)\bigr] = \Phi_{\ell-1}^{\alpha\beta}(t, s), \qquad \E\bigl[v_\ell^\alpha(t)\,v_\ell^\beta(s)\bigr] = G_{\ell+1}^{\alpha\beta}(t, s), \qquad u_\ell \perp v_\ell.
+\end{equation}
+Self-consistency means that the hyperfinite empirical kernels in \eqref{eq:4.56} concentrate $\Loeb$-almost surely, at each standard pair $(t, s)$, around their deterministic standard parts, which coincide with the Loeb expectations over the single-site shadow process:
+\begin{equation}\label{eq:4.61}
+\begin{aligned}
+\Phi_\ell^{\alpha\beta}(t, s) &:= \st\bigl(\Phi_\ell^{(N),\alpha\beta}(t, s)\bigr) = \E\Bigl[\phi\bigl(h_\ell^\alpha(t)\bigr)\phi\bigl(h_\ell^\beta(s)\bigr)\Bigr], \\
+G_\ell^{\alpha\beta}(t, s) &:= \st\bigl(G_\ell^{(N),\alpha\beta}(t, s)\bigr) = \E\bigl[g_\ell^\alpha(t)\,g_\ell^\beta(s)\bigr], \\
+\Phi_0^{\alpha\beta}(t, s) &:= \Phi_0^{\alpha\beta} = \frac{1}{n_0}\ip{x^\alpha}{x^\beta}, \qquad G_{d+1}^{\alpha\beta}(t, s) := 1.
+\end{aligned}
+\end{equation}
+For $1 \le \ell \le d - 1$, the response kernels are the causal functional derivatives
+\begin{equation}\label{eq:4.62}
+\begin{aligned}
+A_\ell^{\alpha\beta}(t, s) &:= \frac{1}{\gamma_0}\,\E\!\left[\frac{\delta\phi\bigl(h_\ell^\alpha(t)\bigr)}{\delta v_\ell^\beta(s)}\right], \qquad &B_\ell^{\alpha\beta}(t, s) &:= \frac{1}{\gamma_0}\,\E\!\left[\frac{\delta g_{\ell+1}^\alpha(t)}{\delta u_{\ell+1}^\beta(s)}\right], \\
+A_0 &:= 0, \qquad &B_d &:= 0.
+\end{aligned}
+\end{equation}
+They vanish for $s > t$; the expectation is over the same single-site shadow law on the Loeb product space \cite[Sec.~3.2]{bordelon2022self}. Taken together, \eqref{eq:4.57}--\eqref{eq:4.62} form a fixed-point equation for the law of the representative shadow process and its deterministic kernel order parameters: a candidate collection $(\Phi, G, A, B)$ determines the Gaussian drives and memory terms, hence the process, and the correlations and response derivatives of that process must reproduce the same $(\Phi, G, A, B)$.
+
+Finally, the deterministic shadow kernels couple back to the training residual. On the equal-time diagonal, the standard shadow of the normalized NTK \eqref{eq:4.33} is
+\begin{equation}\label{eq:4.63}
+K_t^{\alpha\beta} := \st\bigl(K_t^{(N),\alpha\beta}\bigr) = \sum_{\ell=0}^d G_{\ell+1}^{\alpha\beta}(t, t)\,\Phi_\ell^{\alpha\beta}(t, t).
+\end{equation}
+Writing $r^\alpha(t)$ (and $f^\alpha(t)$) for the deterministic standard shadow $\st(f^\alpha(t) - y^\alpha) = \st(f^\alpha(t)) - y^\alpha$, this closes the macroscopic-time dynamics through
+\begin{equation}\label{eq:4.64}
+r^\alpha(t) = r^\alpha(0) - \int_0^t \sum_{\beta=1}^m K_s^{\alpha\beta} r^\beta(s)\,ds,
+\end{equation}
+equivalently $\partial_t r(t) = -K_t r(t)$ for $r(t) \in \R^m$ \cite[Eq.~(3)]{bordelon2022self}. Under the centered initialization used here, the internal initial output satisfies $f^\alpha(0) \approxP 0$, so the initial residual concentrates infinitesimally around $-y^\alpha$ ($f^\alpha(0) - y^\alpha \approxP -y^\alpha$, giving shadow initial condition $r^\alpha(0) = -y^\alpha$). Writing the same macroscopic quantities as functions of physical time $u$ via $t = \eta_N u / (m\gamma_N^2)$,
+\begin{equation}\label{eq:4.65}
+\frac{d}{du}f^\alpha(u) = \frac{d}{du}r^\alpha(u) = -\frac{\eta_N}{m\gamma_N^2}\sum_{\beta=1}^m K_u^{\alpha\beta} r^\beta(u).
+\end{equation}
+
+The practical takeaway is the contrast with the shallow mean-field limit: deep feature learning at unlimited width $N$ is not captured by a single deterministic transport PDE for a parameter measure. The representative Loeb-sampled coordinate retains non-Markovian memory and Gaussian randomness, while the self-consistent shadow kernels and predictor trajectory are deterministic.
+
+\section{Summary and Outlook}
+\label{sec:4.6}
+
+The general layerwise feature-learning diagnostic at unlimited width $N \in \hNinf$ is $N^{-1}\norm{\Delta h_\ell^\alpha}^2$, which is infinitesimal ($\approx 0$) in the lazy regime. Maximal update sharpens this diagnostic by requiring the component induced by each layer's own weights to satisfy $N^{-1}\norm{\Delta_{W_{\ell-1}} h_\ell^\alpha}^2 \in \App$. The key distinction is between a hyperreal scaling class in $\hR^\times / \App$ and a description of its standard shadow dynamics. For $d = 1$, maximal update is exactly shallow mean-field scaling, whose Loeb pushforward $L(\rho_t^{(N)}) \circ \st^{-1}$ is a deterministic neuron law $\rho_t$; for deep networks, DMFT describes the corresponding feature-learning shadow via a Loeb-sampled representative coordinate. Thus DMFT is not an additional parameterization.
+
+At output level, the normalized NTK is the common bridge: its shadow freezes to $K$ in the lazy regime and evolves with the state in feature-learning regimes. The maximal-update ($\mu$P) regime in this chapter takes an unlimited width $N \in \hNinf$ at fixed standard depth $d \in \N$, whereas Chapters~5 and~6 study unlimited depth and width in the proportional galaxy. These galaxies are not compatible: hyperfinite $O(1/N)$ fluctuations that are infinitesimal at fixed standard depth accumulate over $D \asymp N$ layers to an appreciable effect. As we will see, the proportional galaxy is precisely the regime that captures this phenomenon.
+
+\begin{table}[t]
+\centering
+\small
+\begin{tabularx}{\textwidth}{@{}>{\raggedright\arraybackslash}p{0.23\textwidth}>{\raggedright\arraybackslash}p{0.31\textwidth}>{\raggedright\arraybackslash}X@{}}
+\toprule
+Framework and role & Width/time balance & Unlimited-width shadow description \\
+\midrule
+Lazy NTK (scaling regime) & $\gamma_N = 1$, $\eta_N \in \App$; $N^{-1}\norm{\Delta h_\ell^\alpha}^2 \approx 0$. & The normalized NTK concentrates around a time-independent deterministic kernel $K$; the residual shadow follows linear kernel gradient flow. \\[0.45em]
+Shallow mean field, $d = 1$ (scaling and limit) & $\gamma_N = \sqrt{N}$, $\eta_N = \eta_0 N$; $N^{-1}\norm{\Delta h_1^\alpha}^2 \in \App$. & The Loeb pushforward $L(\rho_t^{(N)}) \circ \st^{-1}$ equals a deterministic law $\rho_t$ governed by a transport PDE/Wasserstein gradient flow; its predictor and $K_t$ can evolve. \\[0.45em]
+Deep maximal update/$\mu$P (scaling principle) & $\gamma_N = \gamma_0\sqrt{N}$, $\eta_N \asymp \gamma_N^2 \asymp N$; every hidden layer satisfies $N^{-1}\norm{\Delta_{W_{\ell-1}} h_\ell^\alpha}^2 \in \App$. & Valuation algebra in $\hR^\times / \App$ selects a stable feature-learning scale but does not by itself specify the shadow dynamics; its $d = 1$ case is the preceding row. \\[0.45em]
+DMFT under deep maximal update (shadow description) & With physical time $u$, use $t = \eta_N u / (m\gamma_N^2)$. & The shadow $(\st(h_{\ell,\iota}^\alpha), \st(z_{\ell,\iota}^\alpha), \st(g_{\ell,\iota}^\alpha))$ of a Loeb-uniform neuron $\iota$ closes through deterministic $\Phi_\ell, G_\ell, A_\ell, B_\ell$; $K_t$ and $r(t)$ are deterministic, with $\partial_t r = -K_t r$ in macroscopic time. \\
+\bottomrule
+\end{tabularx}
+\caption{Relationship among the hyperreal scalings and standard shadow descriptions in this chapter.}
+\label{tab:4.2}
+\end{table}
+
+\section{Exercises}
+\label{sec:4.7}
+
+\begin{enumerate}
+\item \textbf{Shallow Scaling Balance.} Assume that the residuals, activation factors, input kernels, and normalized empirical NTK lie in $\App$, and write $\gamma_N \asymp N^p$ and $\eta_N \asymp N^q$ for standard exponents $p, q \in \R$. Use \eqref{eq:4.10} and \eqref{eq:4.13} in the valuation quotient $\hR^\times / \App$ to show that a typical feature coordinate and the predictor speed satisfy
+\begin{equation}\label{eq:4.66}
+\Delta h_i^\alpha \asymp N^{q - p - 1/2}, \qquad \partial_t f^\alpha \asymp N^{q - 2p}.
+\end{equation}
+Require both quantities to belong to $\App$ (noting that $N^r \in \App$ for $N \in \hNinf$ and standard $r \in \R$ if and only if $r = 0$) and solve for $p$ and $q$. Conclude that $\gamma_N \asymp \sqrt{N}$, $\eta_N \asymp N$, and the output prefactor satisfies $1/(\gamma_N\sqrt{N}) \asymp 1/N$. Finally, recover from the same formulas the feature and output valuation classes in the NTK regime $(p, q) = (0, 0)$ and the naive large-learning-rate regime $(p, q) = (0, 1/2)$.
+
+\item \textbf{Shallow Mean Field as the $d = 1$ Maximal-Update Model.} Set $d = 1$, identify $a_i = (W_1)_{1i}$, and let $w_i^\top$ be the $i$th row of $W_0$. First verify that \eqref{eq:4.28}--\eqref{eq:4.30} becomes exactly \eqref{eq:4.4}. Next show that $g_{1, i}^\alpha = a_i \phi'(h_i^\alpha)$. Using $G_2^{(N),\alpha\beta} = 1$, show that the deep normalized-NTK decomposition \eqref{eq:4.33} reduces exactly to the shallow formula \eqref{eq:4.12}. Finally, with $\gamma_N = \sqrt{N}$ and $\eta_N = \eta_0 N$, verify coordinatewise that the internal gradient updates of $W_0$ and $W_1$ agree with the shallow particle updates of $w_i$ and $a_i$. Conclude that the shallow mean-field model is the $d = 1$ maximal-update model without any additional change of coordinates or layerwise learning rates.
+
+\item \textbf{DMFT Residual, Sign, and Time Conventions.} Starting from the physical-time equation \eqref{eq:4.65} and the change of time $t = \eta_N u / (m\gamma_N^2)$, use $r^\alpha = f^\alpha - y^\alpha$ to derive
+\begin{equation}\label{eq:4.67}
+\frac{d}{dt}r^\alpha(t) = -\sum_{\beta=1}^m K_t^{\alpha\beta} r^\beta(t)
+\end{equation}
+and then recover the integral equation \eqref{eq:4.64}. Check that centered initialization gives $f^\alpha(0) - y^\alpha \approxP -y^\alpha$, so the shadow initial condition is $r^\alpha(0) = -y^\alpha$. If the data-dependent terms in the representative DMFT equations are temporarily written as $A_{\ell-1} + \Phi_{\ell-1}(y - f)$ and $B_\ell + G_{\ell+1}(y - f)$, use $y^\beta - f^\beta = -r^\beta$ to verify the signs $A_{\ell-1} - \Phi_{\ell-1}r$ in \eqref{eq:4.57} and $B_\ell - G_{\ell+1}r$ in \eqref{eq:4.58}. Finally, substitute $A_0 = 0$ and $\Phi_0^{\alpha\beta} = n_0^{-1}\ip{x^\alpha}{x^\beta}$ at the input boundary, and $B_d = 0$ and $G_{d+1}^{\alpha\beta} = 1$ at the output boundary, and write the resulting $\ell = 1$ and $\ell = d$ equations explicitly.
+\end{enumerate}
