@@ -1,0 +1,15 @@
+.lake/
+_out/
+.DS_Store
+.venv/
+__pycache__/
+tex/build/
+tex/*.aux
+tex/*.log
+tex/*.out
+tex/*.toc
+tex/*.bbl
+tex/*.blg
+tex/*.fls
+tex/*.fdb_latexmk
+tex/*.synctex.gz

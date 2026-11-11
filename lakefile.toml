@@ -1,0 +1,21 @@
+name = "NNScaling"
+version = "0.1.0"
+defaultTargets = ["NNScaling"]
+
+[leanOptions]
+autoImplicit = false
+relaxedAutoImplicit = false
+doc.verso = true
+
+[[require]]
+name = "mathlib"
+scope = "leanprover-community"
+rev = "v4.35.0"
+
+[[lean_lib]]
+name = "NNScaling"
+
+[[require]]
+name = "verso"
+git = "https://github.com/leanprover/verso"
+rev = "v4.35.0"

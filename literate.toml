@@ -1,0 +1,35 @@
+docstrings_as_text = true
+hide_commands = ["set_option", "open", "universe", "variable"]
+landing_page = "NNScaling"
+show_imports = false
+order = [
+  "NNScaling.Foundations",
+  "NNScaling.Ch01_Introduction",
+  "NNScaling.Ch02_Kernels",
+  "NNScaling.Ch03_DoubleDescent",
+  "NNScaling.Ch04_FeatureLearning",
+  "NNScaling.Ch05_DepthSDE",
+  "NNScaling.Ch06_ProportionalTopics",
+  "NNScaling.AppendixA_Technical",
+]
+
+[metadata]
+title = "Lecture Notes on Neural Network Scaling Limits (Nonstandard Analysis Edition)"
+description = "A Nonstandard Analysis rewrite and Lean 4 / Verso formalization of Mufan Li's Lecture Notes on Neural Network Scaling Limits."
+
+[modules."NNScaling.Foundations"]
+title = "0. Nonstandard Analysis & Loeb Probability Foundations"
+[modules."NNScaling.Ch01_Introduction"]
+title = "1. Introduction"
+[modules."NNScaling.Ch02_Kernels"]
+title = "2. Kernel Limits for Wide Networks: NNGP and NTK"
+[modules."NNScaling.Ch03_DoubleDescent"]
+title = "3. Double Descent with Random Projections"
+[modules."NNScaling.Ch04_FeatureLearning"]
+title = "4. Feature Learning and Mean-Field Limits"
+[modules."NNScaling.Ch05_DepthSDE"]
+title = "5. Depth Scaling and Covariance SDE Limits"
+[modules."NNScaling.Ch06_ProportionalTopics"]
+title = "6. Further Topics in Proportional Depth-Width Scaling"
+[modules."NNScaling.AppendixA_Technical"]
+title = "A. Technical Complements"
