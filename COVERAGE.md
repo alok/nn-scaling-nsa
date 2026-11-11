@@ -1,81 +1,85 @@
-# Coverage Matrix — Stage 1 (Nonstandard Analysis Edition)
+# Coverage Matrix — Stage 1 (`nsa`) & Stage 2 (`main`, Nonstandard Clifford Analysis)
 
-This document maps every chapter, section, theorem/proposition/lemma, figure, table, and exercise of Mufan Li's 98-page *Lecture Notes on Neural Network Scaling Limits* (STAT 946, University of Waterloo) to:
+This document maps every chapter, section, theorem/proposition/lemma, figure, table, and exercise of Mufan Li's 98-page *Lecture Notes on Neural Network Scaling Limits* (STAT 946, University of Waterloo) across both stages of our rewrite:
 
-1. **LaTeX Monograph (`tex/` → `pdf/nn_scaling_nsa.pdf`):** Full 1-to-1 rewrite preserving Mufan Li's prose, narrative structure, theorem numbering, equation numbering, figures, tables, and exercises while reformulating every asymptotic scaling limit inside Robinson's $\aleph_1$-saturated enlargement $({}^*\mathbb{R}, {}^*\mathbb{N})$ and Loeb probability spaces $(\Omega, \mathcal{L}(\mathcal{A}), L({}^*\mathbb{P}))$.
-2. **Lean 4 / Verso Formalization (`NNScaling/`):** Machine-checked formalization (`v4.35.0`, zero custom `axiom`s, zero `sorry`s) of the hyperreal scale algebra ($\mathbb{L}, \mathbb{I}, \mathbb{A}, \operatorname{st}$) and the core algebraic, calculus, matrix-projection, and differential identities underpinning every chapter.
+1. **Stage 1 — Pure Nonstandard Analysis (`nsa` bookmark, `pdf/nn_scaling_nsa.pdf`, 108 pages):** Full 1-to-1 rewrite preserving Mufan Li's prose, narrative structure, theorem numbering, equation numbering, figures, tables, and exercises while reformulating every asymptotic scaling limit inside Robinson's $\aleph_1$-saturated enlargement $({}^*\mathbb{R}, {}^*\mathbb{N})$ and Loeb probability spaces $(\Omega, \mathcal{L}(\mathcal{A}), L({}^*\mathbb{P}))$.
+2. **Stage 2 — Nonstandard Clifford Analysis (`main` bookmark, `pdf/nn_scaling_clifford.pdf`, 111 pages):** Built strictly on top of Stage 1, upgrading inner products, projections, Schur complements, gradient flows, Wasserstein continuity PDEs, key–query attention logits, and eigenvalue SDEs into Euclidean and hyperreal Clifford algebras $\mathcal{C}\ell_n(\mathbb{R})$, $\mathcal{C}\ell_n(\mathbb{L})$, and ${}^*\mathcal{C}\ell_N$.
+3. **Lean 4 / Verso Formalization (`NNScaling/`):** Machine-checked formalization (`v4.35.0`, `autoImplicit = false`, **zero** custom `axiom`s, **zero** `sorry`s) of both the hyperreal scale algebra (`NNScaling/Foundations.lean`) and the hyperreal Clifford algebra & standard-part multivector homomorphism (`NNScaling/Clifford.lean`), together with chapter-by-chapter algebraic, differential, and geometric theorems.
 
 ---
 
-## Global NSA Dictionary (`NNScaling/Foundations.lean` & `tex/preamble.tex`)
+## Global NSA & Clifford Dictionary (`NNScaling/Foundations.lean`, `NNScaling/Clifford.lean`, `tex/preamble.tex`)
 
-| Classical Asymptotic Concept | Nonstandard Analysis Formulation | Lean 4 Symbol (`NNScaling/Foundations.lean`) |
-|---|---|---|
-| Sequential scales $n \to \infty$, $d \to \infty$, $m \to \infty$ | Unlimited hypernaturals $N, D, M \in {}^*\mathbb{N} \setminus \mathbb{N}$ | `Unlimited` |
-| $O(1)$ / bounded in scale | Limited ring $\mathbb{L} = \{x \in {}^*\mathbb{R} : \exists C \in \mathbb{R},\, \lvert x\rvert \le C\}$ | `Limited`, `Limited.add`, `Limited.mul` |
-| $o(1)$ / vanishing error | Infinitesimal ideal $\mathbb{I}$, $x \approx y \iff x - y \in \mathbb{I}$ | `IsInfinitesimal`, `InfClose` (`≊`) |
-| $\Theta(1)$ / $\asymp 1$ | Appreciable group $\mathbb{A} = \mathbb{L} \setminus \mathbb{I}$, $x \asymp y \iff x/y \in \mathbb{A}$ | `Appreciable`, `ScaleEq` (`≍ₛ`) |
-| Pointwise / $O_{\mathbb{P}}(N^{-\alpha})$ limit | Standard-part homomorphism $\operatorname{st} : \mathbb{L} \to \mathbb{R}$ & Loeb shadow $X \stackrel{L({}^*\mathbb{P})}{\approx} x$ | `st`, `st_add`, `st_mul`, `st_div`, `LoebNear` |
-| Proportional scaling $d/n \to \bar{\tau}$, $n_0/m \to \gamma$, $n/m \to \delta$ | Appreciable hyperfinite ratios $\operatorname{st}(D/N) = \bar{\tau}$, $\operatorname{st}(N_0/M) = \gamma$, $\operatorname{st}(N/M) = \delta$ | `wishart_trace_st_feature`, `dmft_time_rescaling` |
+| Classical Concept | Stage 1 (NSA) | Stage 2 (Nonstandard Clifford Analysis) | Lean 4 Symbol |
+|---|---|---|---|
+| Sequential scales $n, d, m \to \infty$ | Unlimited hypernaturals $N, D, M \in {}^*\mathbb{N} \setminus \mathbb{N}$ | Hyperfinite Clifford dimensions ${}^*\mathcal{C}\ell_N, {}^*\mathcal{C}\ell_{n_k}, {}^*\mathcal{C}\ell_{\dim(\theta)}$ | `Unlimited` |
+| $O(1)$ / bounded in scale | Limited ring $\mathbb{L} \subset {}^*\mathbb{R}$ | Valuation subring $\mathbb{L}$ & $\mathcal{C}\ell_n(\mathbb{L})$ | `Limited`, `LimitedSubring` |
+| $o(1)$ / vanishing error | Infinitesimal ideal $\mathbb{I}$, $x \approx y$ | Maximal ideal $\mathbb{I} \triangleleft \mathbb{L}$ | `IsInfinitesimal`, `InfinitesimalIdeal`, `InfClose` (`≊`) |
+| $\Theta(1)$ / $\asymp 1$ | Appreciable group $\mathbb{A} = \mathbb{L} \setminus \mathbb{I}$ | Appreciable scalar norms $\frac{1}{N}\langle (\Delta h)^{\sim}\Delta h\rangle_0 \in \mathbb{A}$ | `Appreciable`, `ScaleEq` (`≍ₛ`) |
+| Limit / shadow | Standard part $\operatorname{st} : \mathbb{L} \to \mathbb{R}$ | Multivector shadow homomorphism $\operatorname{st}_{\mathcal{C}\ell} : \mathcal{C}\ell_n(\mathbb{L}) \to \mathcal{C}\ell_n(\mathbb{R})$ | `st`, `stRingHom`, `ker_stRingHom`, `stCliffordHom` |
+| Feature / gradient inner product | $\frac{1}{N}\langle u, v\rangle$ | Grade-$0$ reverse product $\frac{1}{N}\langle u v^{\sim}\rangle_0$ in ${}^*\mathcal{C}\ell_N$ | `clifford_vec_sq`, `clifford_symm_polar` |
+| Planar rotation / spectral $i$ | $2\times 2$ rotation / $z \in \mathbb{C}$ | Even rotor $R = c + s\,\hat{B} \in \mathcal{C}\ell_2^+$ ($\hat{B}^2 = -1, \hat{B}^{\sim} = -\hat{B}$) | `unit_bivector_sq_neg_one`, `planarRotor_unit_norm`, `planarRotor_sandwich_e1` |
+| Subspace projection $P_\phi, P_S$ | $\phi(\phi^\top\phi)^\dagger\phi^\top$ | Hestenes blade contraction $(w \lrcorner \bm{\Phi})\bm{\Phi}^{-1}$ & rejection $(w \wedge \bm{\Phi})\bm{\Phi}^{-1}$ | `contraction_leibniz`, `versor_reflection_isometry`, `invertible_blade_right_cancel` |
+| Transport divergence $\nabla \cdot (v\rho)$ | $\partial_x(b\rho_t)$ / $\nabla_{(a,w)}\cdot(v_t\rho_t)$ | Scalar Dirac divergence $\langle \partial_\theta (v_t\rho_t)\rangle_0$ & curl-freeness $\langle \partial_\theta v_t\rangle_2 = 0$ | `monogenic_gradient_bivector_curl_zero` |
 
 ---
 
 ## Chapter-by-Chapter Coverage
 
+### Foundations (`NNScaling/Foundations.lean` & `NNScaling/Clifford.lean`)
+
+| Module | Formalized Content | Key Declarations |
+|---|---|---|
+| `NNScaling/Foundations.lean` | Hyperreal scale classes $\mathbb{L}, \mathbb{I}, \mathbb{A}$, monads, Dedekind `sSup` standard part $\operatorname{st}$, ring/quotient laws, Loeb probability interfaces | `Limited`, `Unlimited`, `IsInfinitesimal`, `Appreciable`, `InfClose`, `ScaleEq`, `st`, `Limited.infClose_st`, `st_add`, `st_mul`, `st_div`, `LoebSpace` |
+| `NNScaling/Clifford.lean` | Valuation subring $\mathbb{L}$, ideal $\mathbb{I} = \ker(\operatorname{st})$, universal bivector/rotor identities, Hestenes contraction Leibniz rule, functorial scalar-change `cliffordChangeRingHom`, hyperreal Clifford shadow `stCliffordHom` | `LimitedSubring`, `InfinitesimalIdeal`, `stRingHom`, `ker_stRingHom`, `bivector_reverse_neg`, `unit_bivector_sq_neg_one`, `planarRotor_mul_reverse`, `planarRotor_unit_norm`, `planarRotor_sandwich_e1`, `versor_reflection_isometry`, `contraction_leibniz`, `euclideanQuadForm`, `stCliffordHom`, `stCliffordHom_infinitesimal_scalar`, `stCliffordHom_infinitesimal_vec` |
+
 ### Chapter 1 — Introduction (`tex/ch01_intro.tex`, `NNScaling/Ch01_Introduction.lean`)
 
-| Source Section / Item | Monograph Coverage (`tex/ch01_intro.tex`) | Lean 4 / Verso (`NNScaling/Ch01_Introduction.lean`) |
+| Source Section / Item | Stage 1 (NSA) & Stage 2 (Clifford) Monograph Coverage | Lean 4 / Verso (`NNScaling/Ch01_Introduction.lean`) |
 |---|---|---|
-| 1.1 Empirical Scaling Laws & Fig 1.1–1.2, Eq `(1.1)` | Hyperfinite power-law decomposition $L(N,D) = E + A N^{-\alpha} + B D^{-\beta} + \varepsilon(N,D)$, microscopic blowup $N^{\alpha}(L(N,\infty) - E) \approx A$; TikZ Fig 1.1 & vector Fig 1.2 | `ScalingLawExpansion`, `ScalingLawExpansion.st_eq`, `ScalingLawExpansion.microscope_st`, `ScalingLawExpansion.scaleEq` |
-| 1.2 Classical Prototypes: CLT & Berry–Esseen, Fig 1.3, Def 1.1, Thm 1.2, Rem 1.3 | Hyperfinite normalized sum $S_N$ with step variance $1/N \in \mathbb{I}$, Loeb Gaussian shadow $\operatorname{st}(S_N) \sim \mathcal{N}(0,1)$, transfer of Berry–Esseen $N^{-1/2}\mathbb{L}$ bound; exact CF-inverted vector Fig 1.3 | `clt_step_variance_infinitesimal` |
-| 1.2 Wigner Semicircle Law, Thm 1.4, Rem 1.5–1.6, Eqs `(1.6)`–`(1.11)` | Hyperfinite symmetric Wigner matrix $X_N = W/\sqrt{N}$, Loeb empirical spectral shadow $\mu_{\mathrm{sc}}$, non-commuting iterated limits via Robinson's Overspill ($M \ll N$ vs $M \gg N$) | `wignerSemicircleDensity`, `wignerSemicircleDensity_nonneg`, `wignerSemicircleDensity_eq_zero_of_abs_ge` |
-| 1.3 Roadmap & Notation (`tex/notation.tex`) | Full chapter-by-chapter regime classification + two-page `xltabular` Notation table | Module docstrings across `NNScaling` |
+| 1.1 Empirical Scaling Laws & Figs 1.1–1.2, Eq `(1.1)` | Hyperfinite power-law decomposition, infinitesimal microscope $s_N^{-1}(L_N - L_\infty) \approx c$; TikZ Fig 1.1 & vector Fig 1.2 | `ScalingLawExpansion`, `ScalingLawExpansion.st_eq`, `ScalingLawExpansion.microscope_st`, `ScalingLawExpansion.scaleEq` |
+| 1.2 CLT, Wigner Semicircle, & Interacting Particles, Fig 1.3, Thms 1.2 & 1.4, Rems 1.5–1.6 | Loeb Gaussian & semicircle shadows; **Stage 2:** Cauchy–Dirac resolvent $(z - N^{-1/2}X)^{-1}$ in $\mathcal{C}\ell_2^+$ ($\bm{i} = e_1 e_2$) and scalar Dirac divergence $\langle \partial_x(b\rho_t)\rangle_0 = 0$ | `clt_step_variance_infinitesimal`, `wignerSemicircleDensity_nonneg`, `wignerSemicircleDensity_eq_zero_of_abs_ge`, `cauchy_dirac_resolvent_norm` |
+| 1.3 Roadmap & Notation (`tex/notation.tex`) | Complete regime table + `xltabular` Notation table with both NSA and Clifford symbols ($\mathcal{C}\ell_k, {}^*\mathcal{C}\ell_N, M^{\sim}, \langle M\rangle_r, \lrcorner, \partial_\theta, \operatorname{Spin}(k)$) | Module docstrings across `NNScaling` |
 
 ### Chapter 2 — Kernel Limits for Wide Networks: NNGP and NTK (`tex/ch02_kernels.tex`, `NNScaling/Ch02_Kernels.lean`)
 
-| Source Section / Item | Monograph Coverage (`tex/ch02_kernels.tex`) | Lean 4 / Verso (`NNScaling/Ch02_Kernels.lean`) |
+| Source Section / Item | Stage 1 (NSA) & Stage 2 (Clifford) Monograph Coverage | Lean 4 / Verso (`NNScaling/Ch02_Kernels.lean`) |
 |---|---|---|
-| 2.1 Shallow NNGP (Setup 2.1, Thm 2.2, Prop 2.3, Rem 2.4, Prop 2.5, Rem 2.6, Eqs `(2.1)`–`(2.19)`) | Conditional internal Gaussianity at width $N \in {}^*\mathbb{N}\setminus\mathbb{N}$, Loeb LLN $\Phi^{(N)} \approx \Phi$, Cho–Saul ReLU arc-cosine kernel $J_1(\vartheta)$ and derivative kernel | `gram_quadForm_nonneg`, `choSaulDeriv`, `choSaulDeriv_zero`, `choSaulDeriv_one`, `choSaulDeriv_neg_one` |
-| 2.2 Deep NNGP (Setup 2.7, Thm 2.8, Prop 2.9–2.10, Rem 2.11, Cor 2.12, Rem 2.13, Eqs `(2.20)`–`(2.37)`) | Layerwise internal Gaussian conditioning on $\mathcal{F}_\ell$, S-continuity lifting $\Phi_\ell^{(N)} \approx \Phi_\ell$, GP posterior regression | Documented in literate narrative + Gram PSD lemmas |
-| 2.3–2.4 NTK Regime & Lazy Training (Setup 2.14, Prop 2.15, Rem 2.16, Prop 2.17–2.18, Def 2.19, Thm 2.20, Rem 2.21, Prop 2.22, Rem 2.23, Eqs `(2.38)`–`(2.61)`) | Internal gradient flow on $[0, {}^*t]$, mean-square neuron displacement $\le t L(\theta_0)/N \approx 0$, Taylor stationarity $K_s^{(N)} \approx K_0^{(N)} \approx K$, standard-part exponential eigenmode decay | `empiricalNTK`, `residual_velocity_eq`, `risk_dissipation_nonpos`, `fixed_kernel_loss_bound`, `ntk_displacement_infinitesimal` |
-| 2.5 Deep MLP NTK Recursion (Setup 2.24, Prop 2.25, Lem 2.26, Prop 2.27, Thm 2.28, Rem 2.29, Eqs `(2.62)`–`(2.91)`) | Rank-one layerwise gradient Frobenius factorization, one-sided Gaussian weight conditioning $W_\ell \stackrel{d}{=} \widetilde{W}_\ell + (\widetilde{Z}_\ell - \widetilde{W}_\ell\varphi_\ell)\varphi_\ell^\dagger$, forward/backward kernel recursion | `rankOne_frobenius_product` |
-| 2.6 Exercises 1–5 | All 5 exercises preserved with hyperfinite width $N$ formulations | Covered in `Ch02_Kernels.lean` |
+| 2.1–2.2 Shallow & Deep NNGP (Thms 2.3 & 2.13, Prop 2.5, Rem 2.8) | Conditional internal Gaussianity in ${}^*\mathcal{C}\ell_N$ via $\Phi^{(N),\alpha\beta} = \frac{1}{N}\langle {}^*\varphi(h^\alpha){}^*\varphi(h^\beta)^{\sim}\rangle_0$; **Stage 2:** Cho–Saul arc-cosine kernel via input-plane rotor $u_1 u_2 = \rho + \sqrt{1-\rho^2}\,\hat{B}$ | `gram_quadForm_nonneg`, `choSaulDeriv_zero`, `choSaulDeriv_one`, `choSaulDeriv_neg_one`, `choSaul_rotor_unit_norm` |
+| 2.3–2.4 NTK Regime & Lazy Training (Props 2.15, 2.17, 2.22, Thm 2.20) | **Stage 2:** Dirac gradient decomposition $\rev{(\partial_\theta f_\alpha)}(\partial_\theta f_\beta) = K_t^{(N),\alpha\beta} + \Omega_t^{(N),\alpha\beta}$ in ${}^*\mathcal{C}\ell_{\dim(\theta)}$, vanishing of bivector curl $\Omega_t^{(N)}$ in risk dissipation, $O(N^{-1}) \subset \mathbb{I}$ lazy freezing | `empiricalNTK`, `residual_velocity_eq`, `risk_dissipation_nonpos`, `bivector_curl_quadForm_zero`, `fixed_kernel_loss_bound`, `ntk_displacement_infinitesimal` |
+| 2.5–2.6 Deep MLP NTK & Conditioning (Prop 2.25, Lem 2.26, Thm 2.28, Exercises 1–5) | **Stage 2:** Hestenes blade projection $(w \lrcorner \bm{\Phi})\bm{\Phi}^{-1}$ and rejection $(w \wedge \bm{\Phi})\bm{\Phi}^{-1}$ in one-sided Gaussian conditioning | `rankOne_frobenius_product` |
 
 ### Chapter 3 — Double Descent with Random Projections (`tex/ch03_double_descent.tex`, `NNScaling/Ch03_DoubleDescent.lean`)
 
-| Source Section / Item | Monograph Coverage (`tex/ch03_double_descent.tex`) | Lean 4 / Verso (`NNScaling/Ch03_DoubleDescent.lean`) |
+| Source Section / Item | Stage 1 (NSA) & Stage 2 (Clifford) Monograph Coverage | Lean 4 / Verso (`NNScaling/Ch03_DoubleDescent.lean`) |
 |---|---|---|
-| 3.1–3.2 Setup & Exact Bias–Variance Decomposition, Eqs `(3.1)`–`(3.13)` | Proportionally unlimited triple $(M, N_0, N) \in ({}^*\mathbb{N}\setminus\mathbb{N})^3$ with $\gamma = \operatorname{st}(N_0/M)$, $\delta = \operatorname{st}(N/M)$; Moore–Penrose minimum-norm interpolator | `varFeature`, `biasFeature`, `riskFeature`, `varAmbient`, `riskAmbient`, `varSample`, `biasSample`, `riskSample` |
-| 3.3 Thm 3.1, Fig 3.1, Lemmas 3.2–3.5, Rem 3.6–3.8, Eqs `(3.14)`–`(3.62)` | Exact internal inverse-Wishart trace $N/(M-N-1) \approx \delta/(1-\delta)$, unlimited spike at $M - N \in \mathbb{N}$, rotational symmetry via orthogonal invariance; vector Fig 3.1 | `wishart_trace_st_feature`, `feature_bias_amplification`, `sample_bias_amplification` |
-| 3.4 Exercises 1–3 | All 3 exercises preserved verbatim in structure | `riskFeature_strictMono`, `riskSample_strictAnti`, `riskSample_decomposition`, `feature_meets_ambient_at_gamma`, `ridgeless_scale_invariance` |
+| 3.1–3.3 Proportional Triple $(M, N_0, N)$, Thm 3.1, Lemmas 3.2–3.5, Fig 3.1 | **Stage 2:** Inverse-Wishart Schur complement as exterior wedge-blade volume ratio $\lVert g_1 \wedge \bm{G}_2\rVert^2 / \lVert \bm{G}_2\rVert^2$ exploding at pseudoscalar saturation $Q = P$; subspace blade $\bm{S} \in \bigwedge^N({}^*\mathbb{R}^{N_0})$ signal decomposition | `wishart_trace_st_feature`, `feature_bias_amplification`, `sample_bias_amplification`, `lagrange_bivector_wedge_norm`, `lagrange_bivector_schur_complement` |
+| 3.4 Exercises 1–3 | Strict monotonicity before/after interpolation, $\delta\to\infty$ decomposition, continuous meeting at $\delta = \gamma < 1$, ridgeless scale invariance | `riskFeature_strictMono`, `riskSample_strictAnti`, `riskSample_decomposition`, `feature_meets_ambient_at_gamma`, `ridgeless_scale_invariance` |
 
 ### Chapter 4 — Feature Learning and Mean-Field Limits (`tex/ch04_feature_learning.tex`, `NNScaling/Ch04_FeatureLearning.lean`)
 
-| Source Section / Item | Monograph Coverage (`tex/ch04_feature_learning.tex`) | Lean 4 / Verso (`NNScaling/Ch04_FeatureLearning.lean`) |
+| Source Section / Item | Stage 1 (NSA) & Stage 2 (Clifford) Monograph Coverage | Lean 4 / Verso (`NNScaling/Ch04_FeatureLearning.lean`) |
 |---|---|---|
-| 4.1–4.3 Mean-Field Parametrization, Continuity Equation, Wasserstein Flow (Setup 4.1, Rem 4.2–4.3, Def 4.4, Thm 4.5, Rem 4.6, Prop 4.7, Eqs `(4.1)`–`(4.38)`) | $1/N$-scaled readout vs $1/\sqrt{N}$ NTK, Loeb pushforward empirical measure $\rho_t = L(\mu_{{}^*t}^{(N)}) \circ \operatorname{st}^{-1}$, propagation of chaos on McKean–Vlasov reference particles, Otto–Wasserstein dissipation | `shallow_normalized_ntk_eq_d1` |
-| 4.4–4.6 Why Depth Changes Scaling, $\mu$P, DMFT (Rem 4.8, Tables 4.1–4.2, Eqs `(4.39)`–`(4.63)`) | Appreciable feature-update condition $\frac{1}{N}\lVert\Delta h_\ell\rVert^2 \in \mathbb{A}$ and appreciable output-drift condition $\Delta f \in \mathbb{A}$ uniquely selecting $\gamma_N \asymp \sqrt{N}, \eta_N \asymp N$; DMFT correlation/response kernels | `featureUpdateExp`, `predictorSpeedExp`, `mup_exponent_balance_iff`, `ntk_lazy_exponents`, `naive_large_lr_exponents`, `hyperreal_mup_scale_solution`, `dmft_time_rescaling` |
-| 4.7 Exercises 1–3 | All 3 exercises ($\mu$P exponent balance, shallow normalized NTK, DMFT rescaling) | All 3 exercises proved completely in `Ch04_FeatureLearning.lean` |
+| 4.1–4.3 Mean-Field Continuity PDE & Otto–Wasserstein Flow (Defs 4.1 & 4.4, Thm 4.5, Prop 4.7) | **Stage 2:** Parameter Dirac operator $\partial_\theta = e_a \partial_a + \sum_k e_k \partial_{w_k} \in \mathcal{C}\ell_{1+n_0}$ ($\partial_\theta^2 = \Delta_{(a,w)}$), continuity PDE $\partial_t \rho_t + \langle \partial_\theta(v_t\rho_t)\rangle_0 = 0$, monogenic curl-freeness $\langle \partial_\theta v_t\rangle_2 = 0$ | `shallow_normalized_ntk_eq_d1`, `monogenic_gradient_bivector_curl_zero` |
+| 4.4–4.7 Deep $\mu$P, DMFT, Tables 4.1–4.2, Exercises 1–3 | **Stage 2:** Appreciable scalar-grade update $\frac{1}{N}\langle (\Delta h_\ell)^{\sim}\Delta h_\ell\rangle_0 \in \mathbb{A}$ uniquely selecting $(p,q) = (1/2, 1)$ | `mup_exponent_balance_iff`, `ntk_lazy_exponents`, `naive_large_lr_exponents`, `hyperreal_mup_scale_solution`, `dmft_time_rescaling` |
 
 ### Chapter 5 — Depth Scaling and Covariance SDE Limits (`tex/ch05_depth_sde.tex`, `NNScaling/Ch05_DepthSDE.lean`)
 
-| Source Section / Item | Monograph Coverage (`tex/ch05_depth_sde.tex`) | Lean 4 / Verso (`NNScaling/Ch05_DepthSDE.lean`) |
+| Source Section / Item | Stage 1 (NSA) & Stage 2 (Clifford) Monograph Coverage | Lean 4 / Verso (`NNScaling/Ch05_DepthSDE.lean`) |
 |---|---|---|
-| 5.1–5.2 ResNet ODE & SDE Limits (Def 5.1, Prop 5.2, Def 5.3, Prop 5.4, Fig 5.1, Eqs `(5.1)`–`(5.22)`) | Hyperfinite Euler grid $\mathbb{T}_D$ with $\eta = T/D \approx 0$, internal Grönwall shadow, Anderson's hyperfinite Brownian motion $B_\tau = \operatorname{st}(\widetilde{W}_{\lfloor \tau D/T\rfloor})$, Keisler–Lindstrøm SDE theorem; TikZ Fig 5.1 | `isserlisTensor`, `isserlisTensor_symm_pair`, `isserlisTensor_symm_swap` |
-| 5.3–5.5 Linear/ReLU GBM, Shaped MLPs, Multi-Input Covariance SDE (Prop 5.5, Rem 5.6, Prop 5.7–5.8, Thm 5.9, Rem 5.10–5.14, Eqs `(5.23)`–`(5.79)`) | Proportional hyperfinite regime $\operatorname{st}(D/N) = \bar{\tau} \in (0,\infty)$, $\sigma = \sqrt{2}$ (linear) and $\sigma = \sqrt{5}$ (ReLU) log-GBM drifts, $N^{-1/2}$ activation shaping, finite-time blowup ODE | `isserlisTensor_one_sample`, `wick_fourth_moment_centered_var`, `gbmLogDrift`, `linear_gbm_log_drift`, `relu_gbm_log_drift`, `smooth_shaping_drift_one_sample`, `logisticCovODE`, `logisticCovODE_zero`, `logisticCovODE_blowup_denom_zero`, `logisticCovODE_hasDerivAt` |
+| 5.1–5.5 ResNet ODE/SDE, Proportional GBM, Isserlis Covariance SDE, Critical Shaping, Fig 5.1 | **Stage 2:** Clifford vector square $U_{\ell,N} = \frac{1}{N}\xi_\ell^2$ in ${}^*\mathcal{C}\ell_N$, scalar-grade Gram matrix $\Phi_\ell^{\alpha\beta} = \frac{1}{N}\langle h_\ell^\alpha (h_\ell^\beta)^{\sim}\rangle_0$, complementary expected 2-blade area $(1 - N^{-1})\det\Phi_\ell|_{2\times 2}$ | `isserlisTensor_pair_symm`, `isserlisTensor_one_sample`, `wick_fourth_moment_sub`, `linear_gbm_log_drift`, `relu_gbm_log_drift`, `smooth_shaping_drift_one_sample`, `logisticCovODE_blowup_denom_zero`, `logisticCovODE_hasDerivAt`, `hyperreal_clifford_vec_sq_euclidean` |
 
 ### Chapter 6 — Further Topics in Proportional Depth–Width Scaling (`tex/ch06_proportional_topics.tex`, `NNScaling/Ch06_ProportionalTopics.lean`)
 
-| Source Section / Item | Monograph Coverage (`tex/ch06_proportional_topics.tex`) | Lean 4 / Verso (`NNScaling/Ch06_ProportionalTopics.lean`) |
+| Source Section / Item | Stage 1 (NSA) & Stage 2 (Clifford) Monograph Coverage | Lean 4 / Verso (`NNScaling/Ch06_ProportionalTopics.lean`) |
 |---|---|---|
-| 6.1 Shaped Attention & Transformers (Setup 6.1, Prop 6.2, Thm 6.3, Rem 6.4–6.5, Eqs `(6.1)`–`(6.30)`) | Centered identity-centered attention $A_\ell = I_m + \tau^{1/2}\widetilde{A}_\ell$ at $\tau = \gamma^2/N \approx 0$, $\operatorname{Softmax}$ Taylor expansion around uniform weights, token covariance SDE | `shapedAttention`, `shapedAttention_colSum_eq_one`, `softmax_quadratic_numerator_identity` |
-| 6.2 Spectrum of Feature Covariance (Setup 6.6, Thm 6.7, Prop 6.8, Thm 6.9–6.11, Cor 6.12, Rem 6.13–6.14, Eqs `(6.31)`–`(6.62)`) | Affine-invariant metric on $\operatorname{SPD}(m)$, intrinsic BM & Geometric Dyson BM eigenvalue repulsion, hyperfinite token count $M \in {}^*\mathbb{N}\setminus\mathbb{N}$ inviscid Burgers PDE for $T_\tau(z)$ and small-$\tau$ Marchenko–Pastur recovery | `affineInvariantMetric_congruence`, `burgers_symmetric_kernel_identity`, `small_tau_discriminant_factorization` |
-| 6.3 One-Step Feature Learning at Proportional Depth–Width (Setup 6.15, Rem 6.16, Eqs `(6.63)`–`(6.105)`) | Two-sided internal Gaussian conditioning (`Lemma A.5`) decoupling forward/backward passes, depth-invariance of $Q_\ell$, telescoping prediction update $R_D^g$ with multiplicative layer interaction | `overlap_Q_depth_invariant`, `kernel_one_step_change`, `overlap_Rg_telescope` |
+| 6.1 Shaped Attention & Key–Query Multivectors | **Stage 2:** Geometric key–query decomposition $k^\alpha q^\beta = \langle k^\alpha q^\beta\rangle_0 + k^\alpha \wedge q^\beta \in {}^*\mathcal{C}\ell_{n_k}$, shaped Softmax expansion, token covariance SDE | `shapedAttention_colSum_eq_one`, `softmax_quadratic_numerator_identity` |
+| 6.2 Spectrum, $\operatorname{Spin}(m)$ Dyson BM, & $\mathcal{C}\ell_2^+$ Burgers PDE | **Stage 2:** Spinor eigenframe evolution $u_k(\tau) = R_\tau e_k R_\tau^{\sim}$ ($R_\tau \in \operatorname{Spin}(m)$) deriving eigenvalue repulsion directly from $(e_i \wedge e_j)^2 = -1$; $\mathcal{C}\ell_2^+$ Cauchy–Dirac Stieltjes inversion | `affineInvariantMetric_congruence`, `spin_eigenframe_repulsion_balance`, `burgers_symmetric_kernel_identity`, `small_tau_discriminant_factorization` |
+| 6.3 One-Step Feature Learning at Proportional Depth–Width | Exact depth-invariance of $Q_\ell$, one-step kernel shift, telescoping prediction update $R_D^g$ | `overlap_Q_depth_invariant`, `kernel_one_step_change`, `overlap_Rg_telescope` |
 
 ### Appendix A — Technical Complements (`tex/appa_technical.tex`, `NNScaling/AppendixA_Technical.lean`)
 
-| Source Section / Item | Monograph Coverage (`tex/appa_technical.tex`) | Lean 4 / Verso (`NNScaling/AppendixA_Technical.lean`) |
+| Source Section / Item | Stage 1 (NSA) & Stage 2 (Clifford) Monograph Coverage | Lean 4 / Verso (`NNScaling/AppendixA_Technical.lean`) |
 |---|---|---|
-| A.1–A.3 Weak Convergence via Loeb Shadows, S-Equicontinuity, Skorohod Lifting (Props A.1–A.4, Eqs `(A.1)`–`(A.9)`) | Loeb pushforward characterization of Polish weak convergence, hyperfinite Arzelà–Ascoli via S-continuity, Aldous tightness via infinitesimal stopping-time increments | Builds on `Foundations.lean` |
-| A.4 Intrinsic Brownian Motion on $\operatorname{SPD}(m)$ (Eqs `(A.10)`–`(A.22)`) | Symmetrized matrix Stratonovich/Itô differential, cometric dual $2\Phi A\Phi$, Laplace–Beltrami drift $\frac{m+1}{2}\Phi$ | `cometric_dual_identity`, `cometric_eval_identity` |
-| A.5 Gaussian Conditioning via Projections (Lemma A.5, Eqs `(A.23)`–`(A.30)`) | One-sided and two-sided orthogonal projector four-block decomposition $W = P_g W + W P_\varphi - P_g W P_\varphi + P_g^\perp W P_\varphi^\perp$ and Frobenius orthogonality | `twoSided_fourBlock_sum`, `twoSided_constrained_blocks_eq`, `unseen_block_frobenius_orthog_right`, `unseen_block_frobenius_orthog_left` |
+| A.1–A.4 Weak Transport, S-Equicontinuity, Skorohod Diffusion Lifting, $\operatorname{SPD}(m)$ Cometric | **Stage 2:** Distributional adjointness of vector Dirac gradient $\partial_x q$ and scalar Dirac divergence $\partial_x \lrcorner (b\rho_t)$; Keisler–Lindstrøm diffusion theorem; cometric duals | `cometric_dual_identity`, `cometric_eval_identity` |
+| A.5 One-Sided & Two-Sided Gaussian Conditioning via Hestenes Blades | **Stage 2:** Coordinate-free blade projections $(u\lrcorner\bm{\Phi})\bm{\Phi}^{-1}, (v\lrcorner\bm{G})\bm{G}^{-1}$ and rejections $(u\wedge\bm{\Phi})\bm{\Phi}^{-1}, (v\wedge\bm{G})\bm{G}^{-1}$ | `twoSided_fourBlock_sum`, `twoSided_constrained_blocks_eq`, `unseen_block_frobenius_orthog_right`, `unseen_block_frobenius_orthog_left`, `invertible_blade_right_cancel` |
