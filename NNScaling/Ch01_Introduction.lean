@@ -1,11 +1,12 @@
-import NNScaling.Foundations
+import NNScaling.Clifford
 
 /-!
 # 1. Introduction
 
-These lecture notes focus on _scaling limits_ of neural networks, reformulated in Robinson's
-nonstandard analysis over the hyperreals $`\mathbb{R}^* = {}^*\mathbb{R}` and Loeb probability spaces
-$`(\Omega, \mathcal{L}(\mathcal{A}), L({}^*\mathbb{P}))`.
+These lecture notes focus on _scaling limits_ of neural networks, reformulated in **Nonstandard
+Clifford Analysis** over the hyperreals $`\mathbb{R}^* = {}^*\mathbb{R}`, Loeb probability spaces
+$`(\Omega, \mathcal{L}(\mathcal{A}), L({}^*\mathbb{P}))`, and Euclidean Clifford algebras
+$`\mathcal{C}\ell_n(\mathbb{R})` and $`{}^*\mathcal{C}\ell_N`.
 
 ## 1.1 Motivation: Scaling Laws as Infinitesimal Microscopes
 
@@ -103,13 +104,15 @@ The three classical scaling limits of Section 1.2 share the four-ingredient nons
    keeps total internal variance equal to $`1 \in \mathbb{A}` while each step variance is
    $`1/N \in \mathbb{I}`. Anderson's theorem identifies standard Brownian motion as the uniform shadow
    $`B_t = \operatorname{st}(Z_t^{(N)})` of the interpolated hyperfinite walk.
-2. **Wigner Semicircle Law (Theorem 1.4):** For an internal $`N \times N` symmetric Wigner matrix $`X`,
-   the Loeb standard-part pushforward of the internal ESD of $`N^{-1/2}X` equals the deterministic
-   semicircle density $`\rho_{\mathrm{sc}}(x) = \frac{\sqrt{(4-x^2)_+}}{2\pi}` on $`[-2, 2]`.
-3. **Interacting Particle System & Mean-Field Transport (Equations (1.8)–(1.11)):** For $`N` particles
+2. **Wigner Semicircle Law & $`\mathcal{C}\ell_2^+` Cauchy–Dirac Resolvent (Theorem 1.4, Remark 1.5):**
+   For an internal $`N \times N` symmetric Wigner matrix $`X`, the Loeb standard-part pushforward of
+   the internal ESD of $`N^{-1/2}X` equals the deterministic semicircle density
+   $`\rho_{\mathrm{sc}}(x) = \frac{\sqrt{(4-x^2)_+}}{2\pi}` on $`[-2, 2]`, extracted via the even
+   Clifford subalgebra $`\mathcal{C}\ell_2^+ \cong \mathbb{C}` ($`\mathbf{i} = e_1 e_2`, $`\mathbf{i}^2 = -1`).
+3. **Interacting Particle System & Scalar Dirac Divergence (Equations (1.8)–(1.11)):** For $`N` particles
    evolving by $`\partial_t X_i = \frac{1}{N}\sum_{j=1}^N {}^*\mathcal{K}(X_i - X_j)`, the Loeb shadow
    $`\rho_t = L(\rho_t^{(N)}) \circ \operatorname{st}^{-1}` solves the weak continuity equation
-   $`\partial_t \rho_t + \partial_x(b(\cdot,\rho_t)\rho_t) = 0`.
+   $`\partial_t \rho_t + \langle \partial_x(b(\cdot,\rho_t)\rho_t)\rangle_0 = 0`.
 -/
 
 /-- **CLT Variance Balance (Equation (1.2)).** If $`N` is unlimited and each independent summand
@@ -138,5 +141,16 @@ theorem wignerSemicircleDensity_eq_zero_of_abs_ge {x : ℝ} (hx : 2 ≤ |x|) :
     linarith
   have hmax : max (4 - x ^ 2) 0 = 0 := max_eq_right (by linarith)
   simp [hmax]
+
+/-- **Remark 1.5 (Cauchy–Dirac Resolvent Denominator in $`\mathcal{C}\ell_2^+`).**
+Identifying a spectral point $`z = x + \eta \, e_1 e_2 \in \mathcal{C}\ell^+(Q)` for orthonormal
+$`e_1, e_2` ($`Q(e_1) = Q(e_2) = 1`, $`e_1 \perp_Q e_2`), multiplying $`z` by its Clifford reverse
+$`z^{\sim} = x - \eta \, e_1 e_2` yields the positive scalar denominator $`(x^2 + \eta^2) \cdot 1`. -/
+theorem cauchy_dirac_resolvent_norm {R M : Type*} [CommRing R] [AddCommGroup M] [Module R M]
+    {Q : QuadraticForm R M} {e₁ e₂ : M}
+    (he₁ : Q e₁ = 1) (he₂ : Q e₂ = 1) (h : Q.IsOrtho e₁ e₂) (x η : R) :
+    planarRotor Q e₁ e₂ x η * CliffordAlgebra.reverse (planarRotor Q e₁ e₂ x η) =
+      (x ^ 2 + η ^ 2) • (1 : CliffordAlgebra Q) :=
+  planarRotor_mul_reverse he₁ he₂ h x η
 
 end NNScaling.Ch01

@@ -1,12 +1,15 @@
-import NNScaling.Foundations
+import NNScaling.Clifford
 
 /-!
 # A. Technical Complements
 
-Appendix A collects the five technical pillars referenced across Chapters 1–6:
+Appendix A collects the five technical pillars referenced across Chapters 1–6 in **Nonstandard
+Clifford Analysis**:
 
-* **A.1 Weak Transport PDE:** Standard-part derivation of $`\partial_t \rho_t + \partial_x(b(\cdot,\rho_t)\rho_t) = 0`
-  from the internal empirical measure $`\rho_t^{(N)}`.
+* **A.1 Weak Transport PDE & Dirac Adjointness:** Standard-part derivation of
+  $`\partial_t \rho_t + \langle \partial_x(b(\cdot,\rho_t)\rho_t)\rangle_0 = 0` from the internal
+  empirical measure $`\rho_t^{(N)}` via distributional adjointness of the vector Dirac gradient
+  $`\partial_x q` and scalar Dirac divergence $`\partial_x \lrcorner (b\rho_t)`.
 * **A.2 S-Equicontinuity via Hölder Activations (Lemma A.1):** Uniform $`L^p` increment bounds
   $`{}^*\mathbb{E}[|f_N(x) - f_N(x')|^p] \le C_{p,K} \|x - x'\|^{\gamma p}` with $`\gamma p > n_0` yield
   Loeb S-continuity on compacta.
@@ -16,9 +19,11 @@ Appendix A collects the five technical pillars referenced across Chapters 1–6:
   implies that the stopped standard-part path solves $`dX_t = b(X_t)\,dt + \sigma(X_t)\,dB_t`.
 * **A.4 Affine-Invariant Cometric Duals:** Verifies $`g_\Phi(2\Phi A\Phi, V) = \operatorname{Tr}(AV)`
   and $`g_\Phi^{-1}(dx^{\alpha\beta}, dx^{\gamma\delta}) = \Sigma^{\alpha\beta,\gamma\delta}(\Phi)`.
-* **A.5 One-Sided & Two-Sided Gaussian Conditioning (Lemma 2.26 & Lemma A.5):** Four-block
-  orthogonal projection decomposition $`W = P_g W + W P_\varphi - P_g W P_\varphi + P_g^\perp W P_\varphi^\perp`
-  and Frobenius orthogonality of the unseen block $`P_g^\perp W P_\varphi^\perp`.
+* **A.5 One-Sided & Two-Sided Gaussian Conditioning via Hestenes Blades (Lemma 2.26 & Lemma A.5):**
+  Coordinate-free blade projections $`P_{\mathbf{\Phi}}(u) = (u \lrcorner \mathbf{\Phi})\mathbf{\Phi}^{-1}`
+  and rejections $`P_{\mathbf{\Phi}}^\perp(u) = (u \wedge \mathbf{\Phi})\mathbf{\Phi}^{-1}`, four-block
+  decomposition $`W = P_g W + W P_\varphi - P_g W P_\varphi + P_g^\perp W P_\varphi^\perp`, and Frobenius
+  orthogonality of the unseen block $`P_g^\perp W P_\varphi^\perp`.
 -/
 
 noncomputable section
@@ -123,5 +128,14 @@ theorem unseen_block_frobenius_orthog_left {n : ℕ} [DecidableEq (Fin n)]
           = (1 - Pφ)ᵀ * Aᵀ * ((1 - Pg) * Pg) * B := by simp only [Matrix.mul_assoc]
       _ = 0 := by simp [hperp_mul]
   rw [hzero, Matrix.trace_zero]
+
+/-- **Section A.5 (Invertible Unit-Blade Right Cancellation in $`\mathcal{C}\ell(Q)`).**
+For any unit vector $`u` ($`Q(u) = 1`, so $`u^{-1} = u`), right-multiplying $`w u = w \lrcorner u + w \wedge u`
+by $`u` recovers $`w` identically: $`(w u) u = w`. -/
+theorem invertible_blade_right_cancel {R M : Type*} [CommRing R] [AddCommGroup M] [Module R M]
+    (Q : QuadraticForm R M) (w : M) {u : M} (hu : Q u = 1) :
+    (CliffordAlgebra.ι Q w * CliffordAlgebra.ι Q u) * CliffordAlgebra.ι Q u =
+      CliffordAlgebra.ι Q w := by
+  rw [mul_assoc, CliffordAlgebra.ι_sq_scalar, hu, map_one, mul_one]
 
 end NNScaling.AppendixA

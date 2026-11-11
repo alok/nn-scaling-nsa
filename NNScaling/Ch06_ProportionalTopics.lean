@@ -1,23 +1,28 @@
-import NNScaling.Foundations
+import NNScaling.Clifford
 
 /-!
 # 6. Further Topics in Proportional Depth–Width Scaling
 
 Chapter 6 develops three applications of proportional hyperfinite depth–width scaling
-($`D, N \in {}^*\mathbb{N} \setminus \mathbb{N}` with $`\operatorname{st}(D/N) = \bar{\tau} \in (0,\infty)`):
+($`D, N \in {}^*\mathbb{N} \setminus \mathbb{N}` with $`\operatorname{st}(D/N) = \bar{\tau} \in (0,\infty)`)
+in **Nonstandard Clifford Analysis**:
 
-1. **Shaped Transformers (Section 6.1):** Temperature scaling $`s = s_0\sqrt{N n_k}`, uniform centering,
-   and an identity shift produce $`A_\ell^s = I_m + \operatorname{Softmax}(s^{-1} S_\ell) - \frac{1}{m}\mathbf{1}\mathbf{1}^\top`,
-   preventing token rank collapse and yielding a covariance SDE shadow (**Theorem 6.4**).
-2. **Spectrum of the Linear Covariance SDE (Section 6.2):** Congruence invariance of the affine-invariant
-   metric $`g_\Phi(A, B) = \frac{1}{2}\operatorname{Tr}(\Phi^{-1} A \Phi^{-1} B)` (**Proposition 6.8**) leads
-   to Geometric Dyson Brownian Motion (**Theorem 6.9**) and, at unlimited token count $`M \in {}^*\mathbb{N}\setminus\mathbb{N}`,
-   to the inviscid Burgers PDE $`\partial_\tau G_\tau = -z G_\tau \partial_z G_\tau` and free log-normal fixed point
-   (**Theorem 6.11**).
+1. **Shaped Transformers & Key–Query Multivectors (Section 6.1):** Decomposing $`k^\alpha q^\beta = \langle k^\alpha q^\beta\rangle_0 + k^\alpha \wedge q^\beta \in {}^*\mathcal{C}\ell_{n_k}`
+   shows how standard Softmax logits retain the scalar inner part while discarding the token-plane bivector;
+   temperature scaling $`s = s_0\sqrt{N n_k}`, uniform centering, and an identity shift produce
+   $`A_\ell^s = I_m + \operatorname{Softmax}(s^{-1} S_\ell) - \frac{1}{m}\mathbf{1}\mathbf{1}^\top`,
+   preventing rank collapse and yielding a covariance SDE shadow (**Theorem 6.4**).
+2. **Spectrum of the Linear Covariance SDE & $`\operatorname{Spin}(m)` Repulsion (Section 6.2):**
+   Congruence invariance of $`g_\Phi(A, B) = \frac{1}{2}\operatorname{Tr}(\Phi^{-1} A \Phi^{-1} B)`
+   (**Proposition 6.8**) and two-sided spinor rotor evolution $`u_k(\tau) = R_\tau e_k R_\tau^{\sim}`
+   with $`R_\tau \in \operatorname{Spin}(m) \subset \mathcal{C}\ell_m^+` ($`(e_i \wedge e_j)^2 = -1`)
+   yield Geometric Dyson Brownian Motion (**Theorem 6.9**), while the $`\mathcal{C}\ell_2^+` Cauchy–Dirac
+   kernel yields the inviscid Burgers PDE $`\partial_\tau G_\tau = -z G_\tau \partial_z G_\tau` and free
+   log-normal fixed point (**Theorem 6.11**).
 3. **One Step of Feature Learning in the Proportional Limit (Section 6.3):** In a deep linear network,
-   the forward–backward overlap $`Q_\ell = \frac{1}{\sqrt{N}}\langle h_\ell, g_\ell\rangle` is _exact_ depth-invariant,
-   the updated feature kernel satisfies $`\Phi_\ell^+ - \Phi_\ell = 2 R_\ell^h + \dot{\Phi}_\ell`, and the
-   telescoping prediction update $`f^+ - f = R_D^g = -\eta r \sum_{\ell=1}^{D-1} (\Phi_\ell + R_\ell^h) G_{\ell+1}`
+   the forward–backward overlap $`Q_\ell = \frac{1}{\sqrt{N}}\langle h_\ell g_\ell^{\sim}\rangle_0` is
+   _exact_ depth-invariant, the updated feature kernel satisfies $`\Phi_\ell^+ - \Phi_\ell = 2 R_\ell^h + \dot{\Phi}_\ell`,
+   and the telescoping prediction update $`f^+ - f = R_D^g = -\eta r \sum_{\ell=1}^{D-1} (\Phi_\ell + R_\ell^h) G_{\ell+1}`
    isolates the non-NTK layer-interaction term $`R_\ell^h G_{\ell+1}` (**Theorem 6.16**).
 -/
 
@@ -168,5 +173,20 @@ theorem overlap_Rg_telescope :
     have hlast := hstep n (Nat.lt_succ_self n)
     rw [Finset.sum_range_succ, mul_add]
     linarith
+
+/-- **Theorem 6.9 ($`\operatorname{Spin}(m)` Rotor Repulsion Drift Balance).**
+In the instantaneous eigenframe $`u_k(\tau) = R_\tau e_k R_\tau^{\sim}` ($`R_\tau \in \operatorname{Spin}(m)`),
+the second-order sandwich expansion from $`(e_i \wedge e_j)^2 = -1` relates the diagonal drift to
+the squared angular-velocity variance $`d\omega_{ij}^2 = \frac{\lambda_i \lambda_j}{(\lambda_i - \lambda_j)^2}\,d\tau`
+via $`d\lambda_i - (\lambda_i - \lambda_j)\,d\omega_{ij}^2 = 0`, forcing the repulsive Dyson drift
+$`d\lambda_i = \frac{\lambda_i \lambda_j}{\lambda_i - \lambda_j}\,d\tau`. -/
+theorem spin_eigenframe_repulsion_balance {lami lamj dlami dω_sq dτ : ℝ}
+    (hgap : lami - lamj ≠ 0)
+    (hdΦii : dlami - (lami - lamj) * dω_sq = 0)
+    (hdω : dω_sq = (lami * lamj / (lami - lamj) ^ 2) * dτ) :
+    dlami = (lami * lamj / (lami - lamj)) * dτ := by
+  have h1 : dlami = (lami - lamj) * dω_sq := sub_eq_zero.1 hdΦii
+  rw [h1, hdω]
+  field_simp [hgap]
 
 end NNScaling.Ch06

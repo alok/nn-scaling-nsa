@@ -1,13 +1,18 @@
-import NNScaling.Foundations
+import NNScaling.Clifford
 
 /-!
 # 4. Feature Learning and Mean-Field Limits
 
 Chapters 2 and 3 studied lazy/fixed-feature regimes in which representations move infinitesimally
-($`\frac{1}{N}\|\Delta h^\alpha\|^2 \in \mathbb{I}`). Chapter 4 studies _feature learning_, characterized in
-nonstandard analysis by requiring the normalized squared pre-activation update to lie in the
-appreciable group $`\mathbb{A} = \mathbb{L} \setminus \mathbb{I}` (**Definitions 4.1 and 4.6**):
-$$`\frac{1}{N}\left\lVert \Delta_{W_{\ell-1}} h_\ell(x^\alpha)\right\rVert^2 \in \mathbb{A}.`
+($`\frac{1}{N}\langle (\Delta h^\alpha)^{\sim} \Delta h^\alpha\rangle_0 \in \mathbb{I}`). Chapter 4 studies
+_feature learning_, characterized in **Nonstandard Clifford Analysis** by requiring the normalized
+scalar-grade feature update in $`{}^*\mathcal{C}\ell_N` to lie in the appreciable group
+$`\mathbb{A} = \mathbb{L} \setminus \mathbb{I}` (**Definitions 4.1 and 4.6**):
+$$`\frac{1}{N}\left\langle \left(\Delta_{W_{\ell-1}} h_\ell(x^\alpha)\right)^{\sim} \Delta_{W_{\ell-1}} h_\ell(x^\alpha)\right\rangle_0 \in \mathbb{A},`
+while the shallow mean-field continuity PDE (**Definition 4.4**) takes the Dirac form
+$`\partial_t \rho_t + \langle \partial_\theta (v_t \rho_t)\rangle_0 = 0` in $`\mathcal{C}\ell_{1+n_0}`,
+whose Otto–Wasserstein potential velocity $`v_t = -\eta_0 \partial_\theta (\delta\mathcal{F}/\delta\rho)`
+has identically vanishing bivector curl $`\langle \partial_\theta v_t\rangle_2 = \partial_\theta \wedge v_t = 0`.
 
 ## 4.1 & 4.4 Scaling Balance and Maximal Update ($`\mu`P)
 
@@ -135,5 +140,16 @@ theorem dmft_time_rescaling {m : ℕ} {c : ℝ} (hc : c ≠ 0)
     h_comp.unique h_phys
   apply mul_right_cancel₀ hc
   linarith
+
+/-- **Definition 4.4 (Monogenic Curl-Freeness of Otto–Wasserstein Potential Velocity in $`\mathcal{C}\ell_{1+n_0}`).**
+For any orthogonal parameter directions $`e_1 \perp_Q e_2` and equal mixed second partials
+$`h_{12} = h_{21} = \partial_1 \partial_2 (\delta\mathcal{F}/\delta\rho)`, the off-diagonal bivector
+curl component $`h_{12} \, e_1 e_2 + h_{21} \, e_2 e_1` of $`\partial_\theta v_t` vanishes identically. -/
+theorem monogenic_gradient_bivector_curl_zero {R M : Type*} [CommRing R] [AddCommGroup M] [Module R M]
+    {Q : QuadraticForm R M} {e₁ e₂ : M} (h : Q.IsOrtho e₁ e₂)
+    {h₁₂ h₂₁ : R} (hsym : h₁₂ = h₂₁) :
+    h₁₂ • (CliffordAlgebra.ι Q e₁ * CliffordAlgebra.ι Q e₂) +
+      h₂₁ • (CliffordAlgebra.ι Q e₂ * CliffordAlgebra.ι Q e₁) = 0 := by
+  rw [hsym, CliffordAlgebra.ι_mul_ι_comm_of_isOrtho h, smul_neg, neg_add_cancel]
 
 end NNScaling.Ch04

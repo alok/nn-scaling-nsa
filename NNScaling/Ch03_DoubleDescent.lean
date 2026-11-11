@@ -1,4 +1,4 @@
-import NNScaling.Foundations
+import NNScaling.Clifford
 
 /-!
 # 3. Double Descent with Random Projections
@@ -7,6 +7,12 @@ Chapter 3 analyzes generalization error for ridgeless random-projection linear r
 proportionally unlimited hyperfinite triple $`(M, N_0, N) \in ({}^*\mathbb{N} \setminus \mathbb{N})^3`
 with appreciable aspect-ratio shadows:
 $$`\gamma := \operatorname{st}\!\left(\frac{N_0}{M}\right) \in (0, \infty), \qquad \delta := \operatorname{st}\!\left(\frac{N}{M}\right) \in (0, \infty).`
+In **Nonstandard Clifford Analysis**, the Schur complement of **Lemma 3.3** becomes the ratio of
+squared exterior blade norms $`\|g_1 \wedge \mathbf{G}_2\|^2 / \|\mathbf{G}_2\|^2` in $`{}^*\mathcal{C}\ell_P`
+(exploding into $`{}^*\mathbb{R}\setminus\mathbb{L}` at pseudoscalar saturation $`Q = P`), and the
+random-feature decomposition of **Proposition 3.5** becomes Hestenes' blade projection and rejection
+$`(\theta_\star \lrcorner \mathbf{S})\mathbf{S}^{-1} + (\theta_\star \wedge \mathbf{S})\mathbf{S}^{-1}`
+against the subspace blade $`\mathbf{S} \in \bigwedge^N({}^*\mathbb{R}^{N_0})`.
 
 ## 3.3 Asymptotic Bias, Variance, and the Phase Diagram
 
@@ -31,7 +37,7 @@ noncomputable section
 
 namespace NNScaling.Ch03
 
-open NNScaling
+open NNScaling BigOperators Finset
 open scoped Hyperreal NNScaling
 
 /-- **Theorem 3.1(a):** Limiting variance in the feature-bottleneck regime $`\delta < \min\{1, \gamma\}`. -/
@@ -202,5 +208,51 @@ theorem ridgeless_scale_invariance {n0 n m : ℕ} {α : ℝ} (hα : α ≠ 0)
   refine Finset.sum_congr rfl fun j _ => ?_
   refine Finset.sum_congr rfl fun k _ => ?_
   field_simp [hα]
+
+/-- **Lemma 3.3 (Lagrange–Bivector Wedge-Norm Schur Complement Identity).**
+For any vectors $`g, u : \operatorname{Fin} n \to \mathbb{R}`, the squared norm of the exterior
+2-blade $`\|g \wedge u\|^2 = \frac{1}{2}\sum_{i,j} (g_i u_j - g_j u_i)^2` equals
+$`\|u\|^2 \|g\|^2 - \langle g, u\rangle^2`, so dividing by $`\|u\|^2 \neq 0` recovers the exact
+Schur-complement rejection norm $`\|g\|^2 - \langle g, u\rangle^2 / \|u\|^2`. -/
+theorem lagrange_bivector_wedge_norm {n : ℕ} (g u : Fin n → ℝ) :
+    (∑ i : Fin n, u i ^ 2) * (∑ i : Fin n, g i ^ 2) - (∑ i : Fin n, g i * u i) ^ 2 =
+      (1 / (2 : ℝ)) * ∑ i : Fin n, ∑ j : Fin n, (g i * u j - g j * u i) ^ 2 := by
+  have h1 :
+      (∑ i : Fin n, ∑ j : Fin n, (g i) ^ 2 * (u j) ^ 2) =
+        (∑ i : Fin n, g i ^ 2) * (∑ j : Fin n, u j ^ 2) := by
+    rw [Finset.sum_mul]
+    refine Finset.sum_congr rfl fun i _ => by rw [Finset.mul_sum]
+  have h2 :
+      (∑ i : Fin n, ∑ j : Fin n, (g j) ^ 2 * (u i) ^ 2) =
+        (∑ i : Fin n, u i ^ 2) * (∑ j : Fin n, g j ^ 2) := by
+    rw [Finset.sum_mul]
+    refine Finset.sum_congr rfl fun i _ => ?_
+    rw [Finset.mul_sum]
+    refine Finset.sum_congr rfl fun j _ => by ring
+  have h3 :
+      (∑ i : Fin n, ∑ j : Fin n, (g i * u i) * (g j * u j)) =
+        (∑ i : Fin n, g i * u i) ^ 2 := by
+    rw [sq, Finset.sum_mul]
+    refine Finset.sum_congr rfl fun i _ => by rw [Finset.mul_sum]
+  have hexpand :
+      (∑ i : Fin n, ∑ j : Fin n, (g i * u j - g j * u i) ^ 2) =
+        (∑ i : Fin n, ∑ j : Fin n, (g i) ^ 2 * (u j) ^ 2) +
+          (∑ i : Fin n, ∑ j : Fin n, (g j) ^ 2 * (u i) ^ 2) -
+          2 * (∑ i : Fin n, ∑ j : Fin n, (g i * u i) * (g j * u j)) := by
+    rw [Finset.mul_sum, ← Finset.sum_add_distrib, ← Finset.sum_sub_distrib]
+    refine Finset.sum_congr rfl fun i _ => ?_
+    rw [Finset.mul_sum, ← Finset.sum_add_distrib, ← Finset.sum_sub_distrib]
+    refine Finset.sum_congr rfl fun j _ => by ring
+  rw [hexpand, h1, h2, h3]
+  ring
+
+theorem lagrange_bivector_schur_complement {n : ℕ} (g u : Fin n → ℝ)
+    (hu : (∑ i : Fin n, u i ^ 2) ≠ 0) :
+    (∑ i : Fin n, g i ^ 2) - (∑ i : Fin n, g i * u i) ^ 2 / (∑ i : Fin n, u i ^ 2) =
+      (1 / (2 * ∑ i : Fin n, u i ^ 2)) *
+        ∑ i : Fin n, ∑ j : Fin n, (g i * u j - g j * u i) ^ 2 := by
+  have hlag := lagrange_bivector_wedge_norm g u
+  field_simp [hu]
+  linarith
 
 end NNScaling.Ch03

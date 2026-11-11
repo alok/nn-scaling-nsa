@@ -1,23 +1,25 @@
-import NNScaling.Foundations
+import NNScaling.Clifford
 
 /-!
 # 2. Kernel Limits for Wide Networks: NNGP and NTK
 
 Chapter 2 studies two distinct hyperfinite-width limits ($`N \in {}^*\mathbb{N} \setminus \mathbb{N}` at
-standard depth $`d`, input dimension $`n_0`, and dataset size $`m`):
+standard depth $`d`, input dimension $`n_0`, and dataset size $`m`) through **Nonstandard Clifford Analysis**:
 
 1. **Initialization (NNGP, Sections 2.1–2.2):** Conditioned on the hidden pre-activations, Gaussian
-   readout weights make the output vector _exactly_ internally Gaussian with covariance $`\Phi^{(N)}`.
-   By the hyperfinite law of large numbers, $`\Phi^{(N)} \approx \Phi` $`L({}^*\mathbb{P})`-almost surely,
-   yielding a standard Gaussian process shadow $`\operatorname{GP}(0, \Phi)` (**Theorem 2.3**) and the
-   deep recursion $`\Phi_{\ell+1} = \mathcal{C}_\varphi(\Phi_\ell)` (**Theorem 2.13**).
-2. **Training (NTK, Sections 2.3–2.5):** Along gradient flow $`\partial_t \theta = -\nabla_\theta L(\theta)`,
-   the residual obeys $`\partial_t r = -\frac{1}{m} K_t^{(N)} r` (**Proposition 2.15**), loss dissipates at
-   rate $`-\frac{1}{m^2} r^\top K_t^{(N)} r \le 0` (**Proposition 2.17**), and for a depth-$`d` MLP the
-   empirical NTK decomposes via Hadamard products as
-   $`K_t^{(N)} = \sum_{\ell=0}^d G_{\ell+1}^{(N)} \odot \Phi_\ell^{(N)}` (**Proposition 2.25**). Because
-   per-neuron parameter displacement is $`O(N^{-1}) \subset \mathbb{I}`, $`K_t^{(N)} \approx K` remains
-   frozen at its deterministic shadow, yielding exponential loss decay (**Proposition 2.22**).
+   readout weights make the output vector _exactly_ internally Gaussian with scalar-grade Clifford Gram
+   covariance $`\Phi^{(N),\alpha\beta} = \frac{1}{N}\langle {}^*\varphi(h^\alpha) \, {}^*\varphi(h^\beta)^{\sim}\rangle_0`
+   in $`{}^*\mathcal{C}\ell_N`. By the hyperfinite law of large numbers, $`\Phi^{(N)} \approx \Phi`
+   $`L({}^*\mathbb{P})`-almost surely, yielding a standard Gaussian process shadow $`\operatorname{GP}(0, \Phi)`
+   (**Theorem 2.3**), the Cho–Saul planar rotor $`u_1 u_2 = \rho + \sqrt{1-\rho^2}\,\hat{B}` (**Remark 2.8**),
+   and the deep recursion $`\Phi_{\ell+1} = \mathcal{C}_\varphi(\Phi_\ell)` (**Theorem 2.13**).
+2. **Training (NTK, Sections 2.3–2.5):** In $`{}^*\mathcal{C}\ell_{\dim(\theta)}`, the full geometric
+   product of parameter Dirac gradients splits as
+   $`(\partial_\theta f_\alpha)^{\sim}(\partial_\theta f_\beta) = K_t^{(N),\alpha\beta} + \Omega_t^{(N),\alpha\beta}`
+   into the symmetric scalar NTK $`K_t^{(N)}` and antisymmetric bivector curl $`\Omega_t^{(N)}`. Along
+   gradient flow $`\partial_t \theta = -\partial_\theta L(\theta)`, the curl cancels identically in
+   symmetric quadratic forms while loss dissipates at rate $`-\frac{1}{m^2} r^\top K_t^{(N)} r \le 0`
+   (**Proposition 2.17**), remaining infinitesimally frozen at $`K` (**Proposition 2.22**).
 -/
 
 noncomputable section
@@ -170,5 +172,41 @@ theorem rankOne_frobenius_product {N : ℕ} (gα gβ φα φβ : Fin N → ℝ) 
           congr 1
           rw [Finset.mul_sum]
           refine Finset.sum_congr rfl fun i _ => by ring
+
+/-- **Remark 2.8 (Cho–Saul Unit Rotor Normalization in $`\mathcal{C}\ell_{n_0}^+`).**
+For any correlation $`\rho \in [-1, 1]`, the input-plane rotor
+$`R_\rho = \rho + \sqrt{1 - \rho^2}\,e_1 e_2` formed by unit input directions satisfies
+$`R_\rho R_\rho^{\sim} = 1`. -/
+theorem choSaul_rotor_unit_norm {M : Type*} [AddCommGroup M] [Module ℝ M]
+    {Q : QuadraticForm ℝ M} {e₁ e₂ : M}
+    (he₁ : Q e₁ = 1) (he₂ : Q e₂ = 1) (h : Q.IsOrtho e₁ e₂)
+    {ρ : ℝ} (hρ : ρ ^ 2 ≤ 1) :
+    planarRotor Q e₁ e₂ ρ (Real.sqrt (1 - ρ ^ 2)) *
+      CliffordAlgebra.reverse (planarRotor Q e₁ e₂ ρ (Real.sqrt (1 - ρ ^ 2))) = 1 := by
+  apply planarRotor_unit_norm he₁ he₂ h
+  rw [Real.sq_sqrt (by linarith)]
+  ring
+
+/-- **Section 2.3 (Vanishing of the Antisymmetric Bivector Curl in Quadratic Risk Dissipation).**
+For any antisymmetric pairing $`\Omega_{\alpha\beta} = -\Omega_{\beta\alpha}` (representing a component
+of the tangent bivector $`\partial_\theta f_\alpha \wedge \partial_\theta f_\beta`) and any residual
+vector $`r : \operatorname{Fin} m \to \mathbb{R}`, the quadratic form
+$`\sum_{\alpha,\beta} r_\alpha r_\beta \Omega_{\alpha\beta}` vanishes identically. -/
+theorem bivector_curl_quadForm_zero {m : ℕ} (Ω : Fin m → Fin m → ℝ)
+    (hΩ : ∀ α β, Ω α β = -Ω β α) (r : Fin m → ℝ) :
+    (∑ α : Fin m, ∑ β : Fin m, r α * r β * Ω α β) = 0 := by
+  have hswap :
+      (∑ α : Fin m, ∑ β : Fin m, r α * r β * Ω α β) =
+        -(∑ α : Fin m, ∑ β : Fin m, r α * r β * Ω α β) := by
+    calc
+      (∑ α : Fin m, ∑ β : Fin m, r α * r β * Ω α β)
+          = ∑ α : Fin m, ∑ β : Fin m, r β * r α * Ω β α := Finset.sum_comm
+      _ = ∑ α : Fin m, ∑ β : Fin m, -(r α * r β * Ω α β) := by
+            refine Finset.sum_congr rfl fun α _ => Finset.sum_congr rfl fun β _ => ?_
+            rw [hΩ β α]
+            ring
+      _ = -(∑ α : Fin m, ∑ β : Fin m, r α * r β * Ω α β) := by
+            simp [Finset.sum_neg_distrib]
+  linarith
 
 end NNScaling.Ch02

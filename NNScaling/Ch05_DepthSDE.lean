@@ -1,11 +1,14 @@
-import NNScaling.Foundations
+import NNScaling.Clifford
 
 /-!
 # 5. Depth Scaling and Covariance SDE Limits
 
 Chapter 5 studies unlimited network depth $`D \in {}^*\mathbb{N} \setminus \mathbb{N}`, culminating in the
 proportional depth–width galaxy $`(D, N) \in ({}^*\mathbb{N} \setminus \mathbb{N})^2` with appreciable
-depth-to-width shadow $`\bar{\tau} := \operatorname{st}(D / N) \in (0, \infty)`.
+depth-to-width shadow $`\bar{\tau} := \operatorname{st}(D / N) \in (0, \infty)`. In $`{}^*\mathcal{C}\ell_N`,
+empirical feature covariances are scalar-grade geometric products
+$`\Phi_\ell^{\alpha\beta} = \frac{1}{N}\langle h_\ell^\alpha (h_\ell^\beta)^{\sim}\rangle_0` while layerwise
+Gaussian multipliers take the Clifford vector-square form $`U_{\ell,N} = \frac{1}{N}\xi_\ell^2`.
 
 ## 5.2–5.4 Multiplicative Variance, Isserlis Covariance, and Critical Shaping
 
@@ -28,7 +31,7 @@ noncomputable section
 
 namespace NNScaling.Ch05
 
-open NNScaling
+open NNScaling BigOperators Finset
 open scoped Hyperreal NNScaling
 
 /-- **Proposition 5.5 (Isserlis / Wick Covariance Tensor on Symmetric Gram Matrices, Equation (5.35)).**
@@ -135,5 +138,15 @@ theorem logisticCovODE_hasDerivAt {Φ0 b τ : ℝ}
   refine hinv.congr_deriv ?_
   field_simp [hden]
   ring
+
+/-- **Section 5.3 (Hyperreal Clifford Vector Square Identity, Equation (5.20)).**
+In the Euclidean Clifford algebra over $`\mathbb{R}^*`, the geometric square $`\xi^2` of an
+innovation vector $`\xi : \operatorname{Fin} n \to \mathbb{R}^*` equals its scalar squared norm
+$`\sum_i \xi_i^2 \cdot 1`. -/
+theorem hyperreal_clifford_vec_sq_euclidean (n : ℕ) (ξ : Fin n → ℝ*) :
+    CliffordAlgebra.ι (euclideanQuadForm ℝ* n) ξ *
+      CliffordAlgebra.ι (euclideanQuadForm ℝ* n) ξ =
+    algebraMap ℝ* _ (∑ i : Fin n, ξ i * ξ i) := by
+  rw [CliffordAlgebra.ι_sq_scalar, euclideanQuadForm_apply]
 
 end NNScaling.Ch05
