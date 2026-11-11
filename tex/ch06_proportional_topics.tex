@@ -1,0 +1,904 @@
+\chapter{Further Topics in Proportional Depth--Width Scaling}
+\label{ch:proportional-topics}
+
+This chapter develops three further aspects of the proportional ``depth--width'' scaling regime, in which depth $D \in \hNinf$ and width $N \in \hNinf$ are both unlimited hyperintegers lying in the same proportional galaxy $\st(D/N) = \bar{\tau} \in (0, \infty)$, with infinitesimal layer step $\Delta\tau := 1/N \approx 0$. The common mechanism is the hyperfinite accumulation of infinitesimal layerwise effects across $D \asymp N$ layers. Depending on the setting, taking standard shadows produces a covariance SDE at initialization, nontrivial spectral dynamics, or interactions among layer updates after one training step. We study:
+\begin{enumerate}[label=(\roman*)]
+  \item how shaping prevents rank collapse in pure attention and yields a covariance SDE shadow in the proportional galaxy \cite{noci2023shaped};
+  \item what the linear covariance SDE implies for eigenvalues and empirical spectral distributions \cite{li2026geometric};
+  \item how one gradient step changes features and predictions in a deep linear network \cite{li2026feature}.
+\end{enumerate}
+The first two parts concern forward propagation at initialization. The final part turns to training and isolates the layer-interaction term absent from kernel linearization. Parts (ii) and (iii) draw on a recent preprint and a manuscript in preparation, respectively; here we prioritize clean statements and plausibility calculations.
+
+\section{Shaped Transformers}
+\label{sec:shaped-transformers}
+
+A Transformer is an architecture that roughly treats a single token (word in a sentence) as a vector similar to a single data point in an MLP, but considers a sequence of tokens as inputs together (like a full sentence or paragraph), and allows for mixing via a self-attention mechanism.
+
+Fix standard dimensions $n_0, m \in \N$, input token vectors $x^1, \dots, x^m \in \R^{n_0}$, and write $h_0 = [x^\beta]_{\beta=1}^m \in \R^{n_0 \times m}$. At an unlimited hidden width $N \in \hNinf$, the input layer uses an internal embedding matrix $W_0 \in \hR^{N \times n_0}$ and produces the first hidden-state matrix
+\begin{equation}
+\label{eq:ch6-attn-embed}
+h_1 := \frac{1}{\sqrt{n_0}} W_0 h_0, \qquad
+h_\ell = \bigl[h_\ell^\beta\bigr]_{\beta=1}^m \in \hR^{N \times m}, \qquad
+h_\ell^\beta \in \hR^N, \quad \ell \ge 1,
+\end{equation}
+where the columns correspond to tokens. At internal layer $\ell \ge 1$, the (single-head) scaled dot-product attention mechanism, with fixed standard query/key width $n_k \in \N$, first forms the query and key matrices
+\begin{equation}
+\label{eq:ch6-qk}
+q_\ell = \frac{1}{\sqrt{N}} W_\ell^q h_\ell \in \hR^{n_k \times m}, \qquad
+k_\ell = \frac{1}{\sqrt{N}} W_\ell^k h_\ell \in \hR^{n_k \times m},
+\end{equation}
+and then the score and attention matrices
+\begin{equation}
+\label{eq:ch6-score-attn}
+S_\ell := k_\ell^\top q_\ell \in \hR^{m \times m}, \qquad
+A_\ell := \Softmax\bigl(s^{-1} S_\ell - M\bigr) \in \hR^{m \times m},
+\end{equation}
+where $M$ is the mask, $s \in \hR_{>0}$ is the temperature, and $\Softmax$ denotes the natural internal extension $\ns{\Softmax}$ on $\hR^{m \times m}$. Increasing $s$ shrinks the logits and makes each attention column less concentrated. Standard scaled dot-product attention takes appreciable $s \asymp \sqrt{n_k}$, and we will discuss unlimited choices later. Here the Softmax is column-wise, i.e.\ for $S \in \hR^{m \times m}$,
+\begin{equation}
+\label{eq:ch6-softmax-def}
+\Softmax(S)_{\alpha\beta} := \frac{\exp(S_{\alpha\beta})}{\sum_{\gamma=1}^m \exp(S_{\gamma\beta})}.
+\end{equation}
+Thus the first index $\alpha$ denotes the key token, the second index $\beta$ denotes the query token, and every column of $A_\ell$ sums to $1$. The corresponding self-attention network recursion is
+\begin{equation}
+\label{eq:ch6-attn-rec}
+h_{\ell+1} = \frac{1}{\sqrt{N}} W_\ell^v h_\ell A_\ell.
+\end{equation}
+Thus $h_\ell A_\ell$ performs a weighted average across the token index. Because tokens are stored as columns, the $\beta$th output column is the attention-weighted sum of the value vectors, and no transpose is needed in the recursion. Here $W_\ell^q, W_\ell^k \in \hR^{n_k \times N}$ and $W_\ell^v \in \hR^{N \times N}$. At initialization, all entries of $W_0, W_\ell^q, W_\ell^k, W_\ell^v$, across weight types and hyperfinite layers, are mutually internally independent $\hNcal(0, 1)$ random variables.
+
+Normally $M$ is the causal mask, with $M_{\alpha\beta} = +\infty$ for $\alpha > \beta$ and $0$ otherwise. For simplicity, throughout this section we set $M = 0$ and study unmasked attention.
+
+However, naively running this attention-only recursion to an unlimited depth leads to a degeneracy known as rank collapse. To see the scale of one layer, suppress the layer index and note the exact internal identity
+\begin{equation}
+\label{eq:ch6-logit-ip}
+\frac{1}{s} k^\top q = \frac{1}{s} \bigl[\ip{k^\alpha}{q^\beta}\bigr]_{\alpha,\beta=1}^m.
+\end{equation}
+Under the internal Gaussian initialization specified above, for fixed $\alpha$ and $\beta$ the summands $k_a^\alpha q_a^\beta$ are internally i.i.d.\ and centered across $a \in [n_k]$, conditional on $h$. Thus $\ip{k^\alpha}{q^\beta}$ is limited of appreciable scale $\sqrt{n_k}$ when the normalized token norms lie in $\App$. With the standard choice $s \asymp \sqrt{n_k}$, the logits lie in $\Lim$ with non-infinitesimal variance, and
+\begin{equation}
+\label{eq:ch6-unshaped-softmax}
+A = \Softmax\!\left(\frac{1}{s} k^\top q\right)
+\end{equation}
+does not lie in the monad of the identity matrix $I_m$ at unlimited width $N \in \hNinf$.
+
+Each layer therefore performs appreciable token mixing. In a deep pure self-attention network without shortcuts or MLPs, repeated mixing across unlimited depth drives the token representations into the monad of a token-uniform rank-one configuration; under the conditions of \cite[Theorem 2.3]{dong2021attention}, this contraction is doubly exponential in depth. Related signal-propagation analysis connects rank collapse at initialization to vanishing query and key gradients \cite[Theorem 3.2]{noci2022signal}.
+
+This is similar to the ReLU correlation degeneration in \eqref{eq:cho_saul_corr_map}.
+There the scalar correlation map drives every off-diagonal correlation toward $1$; here repeated token mixing aligns the token representations. The mechanisms are different, but in both cases normalized representations become infinitesimally indistinguishable at unlimited depth.
+
+This motivates an attention analogue of the activation shaping in \eqref{eq:relu_like_shaping} and \eqref{eq:smooth_shaping}:
+make the token mixing in each layer infinitesimal of just the right scale to accumulate nontrivially over proportional hyperfinite depth $D \asymp N$.
+
+\subsection{Shaped Attention and the Covariance SDE Limit}
+\label{subsec:shaped-attn-sde}
+
+At an unlimited temperature, ordinary Softmax lies infinitely close to the uniform matrix $\frac{1}{m}\1\1^\top$, which still averages the tokens at every step. The shaped Transformer instead uses the same broad strategy as the smooth activation shaping in \eqref{eq:smooth_shaping}:
+subtract the leading uniform term and add the identity, leaving an infinitesimal width-dependent perturbation of $I_m$ whose one-step effects accumulate over proportional hyperfinite depth. For attention, the construction in \cite[Section 4.2]{noci2023shaped} combines three modifications:
+\begin{enumerate}[label=(\alph*)]
+  \item temperature scaling: take an unlimited temperature $s \in \hR_{>0} \setminus \Lim$ larger than the standard $\sqrt{n_k}$, namely $s = s_0 \sqrt{N n_k}$;
+  \item uniform centering: subtract the uniform Softmax baseline $\frac{1}{m}\1\1^\top$;
+  \item identity shift: add $I_m$ so that shaped attention lies in the monad of $I_m$.
+\end{enumerate}
+
+\begin{definition}[Shaped Attention]
+\label{def:shaped-attention}
+In the unmasked column-token convention, the shaped attention map at unlimited width $N \in \hNinf$ is
+\begin{equation}
+\label{eq:ch6-shaped-attn-def}
+A_\ell^s := I_m + \Softmax\bigl(s^{-1} S_\ell\bigr) - \frac{1}{m}\1\1^\top.
+\end{equation}
+Here $s = s_0 \sqrt{N n_k} \in \hR_{>0} \setminus \Lim$ for fixed standard $s_0 > 0$. The subtraction removes the leading uniform term, while the identity shift prevents mixing between token positions at appreciable order. Each column of $A_\ell^s$ still sums to $1$, although the uniform centering means that some off-diagonal entries may be negative.
+\end{definition}
+
+\begin{definition}[Feature Covariance]
+\label{def:feature-cov-attn}
+The input and hidden token feature covariances are
+\begin{equation}
+\label{eq:ch6-feature-cov}
+\Phi_0 := \frac{1}{n_0} h_0^\top h_0 \in \R^{m \times m}, \qquad
+\Phi_\ell := \frac{1}{N} h_\ell^\top h_\ell \in \hR^{m \times m}, \quad \ell \ge 1.
+\end{equation}
+Thus $\Phi_\ell^{\alpha\beta} = N^{-1}\ip{h_\ell^\alpha}{h_\ell^\beta}$ for $\ell \ge 1$. The rows of $h_1$ are internally i.i.d.\ $\hNcal(0, \Phi_0)$, so the Loeb strong law of large numbers gives $\Phi_1 \approx \Phi_0$ entrywise $\Loeb$-a.s.\ (and hence $\Phi_1 \approxP \Phi_0$). The hidden token covariance is the main object tracked across proportional hyperfinite depth.
+\end{definition}
+
+\begin{lemma}[A Softmax Expansion Around the Uniform Point]
+\label{lem:softmax-expansion}
+Let $S \in \Lim^{m \times m} \subset \hR^{m \times m}$ be a limited matrix and consider $\Softmax(s^{-1} S)$ at an unlimited positive temperature $s \in \hR_{>0} \setminus \Lim$. For each column index $\beta \in [m]$, define the internal column mean and mean square
+\begin{equation}
+\label{eq:ch6-col-moments}
+\overline{S^\beta} := \frac{1}{m}\sum_{\gamma=1}^m S^{\gamma\beta}, \qquad
+\overline{(S^\beta)^2} := \frac{1}{m}\sum_{\gamma=1}^m (S^{\gamma\beta})^2.
+\end{equation}
+Then, entrywise for $\alpha, \beta \in [m]$,
+\begin{equation}
+\label{eq:ch6-softmax-taylor}
+\Softmax(s^{-1} S)^{\alpha\beta}
+= \frac{1}{m}
+  + \frac{1}{ms}\bigl(S^{\alpha\beta} - \overline{S^\beta}\bigr)
+  + \frac{1}{2ms^2}\left[\bigl(S^{\alpha\beta} - \overline{S^\beta}\bigr)^2 - \left(\overline{(S^\beta)^2} - \bigl(\overline{S^\beta}\bigr)^2\right)\right]
+  + \mathcal{O}(s^{-3}),
+\end{equation}
+where $\mathcal{O}(s^{-3})$ denotes an internal remainder $R_s^{\alpha\beta}(S)$ satisfying $s^3 R_s^{\alpha\beta}(S) \in \Lim$, with a uniform standard bound $\abs{R_s^{\alpha\beta}(S)} \le C_B s^{-3}$ whenever $\norm{S}_F \le B$ for standard $B > 0$.
+\end{lemma}
+
+\begin{proof}
+Fix a column index $\beta$ and set $r_\alpha := S^{\alpha\beta} \in \Lim$. Also write $\bar{r} := m^{-1}\sum_{\nu=1}^m r_\nu$ and $\overline{r^2} := m^{-1}\sum_{\nu=1}^m r_\nu^2$. Since $r_\alpha / s \approx 0$, transferring the second-order Taylor theorem with uniform remainder on $[-B, B]$ gives the first two internal expansions below, and shows that the normalized denominator in the second line lies in $\mon(1)$ and is appreciably bounded away from zero. Applying the transferred geometric expansion $(1 + x)^{-1} = 1 - x + x^2 + \mathcal{O}(x^3)$ for $x \approx 0$ then gives the final line:
+\begin{equation}
+\label{eq:ch6-softmax-proof-steps}
+\begin{aligned}
+e^{r_\alpha / s} &= 1 + \frac{r_\alpha}{s} + \frac{r_\alpha^2}{2s^2} + \mathcal{O}(s^{-3}), \\
+\frac{1}{m}\sum_{\nu=1}^m e^{r_\nu / s} &= 1 + \frac{\bar{r}}{s} + \frac{\overline{r^2}}{2s^2} + \mathcal{O}(s^{-3}), \\
+\Softmax(s^{-1} S)^{\alpha\beta} &= \frac{1}{m}\left[1 + \frac{r_\alpha - \bar{r}}{s} + \frac{(r_\alpha - \bar{r})^2 - (\overline{r^2} - \bar{r}^2)}{2s^2}\right] + \mathcal{O}(s^{-3}),
+\end{aligned}
+\end{equation}
+which is the claimed internal expansion after substituting the definitions above.
+\end{proof}
+
+With $s = s_0 \sqrt{N n_k}$, layer step $\Delta\tau = 1/N \approx 0$, and raw scores $S_\ell = k_\ell^\top q_\ell$ of typical limited size $\asymp \sqrt{n_k}$, the entries of $s^{-1} S_\ell$ are infinitesimals of scale $N^{-1/2} = \sqrt{\Delta\tau}$. Equivalently, Lemma~\ref{lem:softmax-expansion} is an exact internal expansion in the infinitesimal step scale $\sqrt{\Delta\tau}$.
+
+More precisely, combining \eqref{eq:ch6-shaped-attn-def} with Lemma~\ref{lem:softmax-expansion} yields the entrywise internal decomposition
+\begin{equation}
+\label{eq:ch6-shaped-attn-exp}
+\begin{aligned}
+(A_\ell^s)^{\alpha\beta}
+&= (I_m)^{\alpha\beta}
+  + \underbrace{\frac{S_\ell^{\alpha\beta} - \overline{S_\ell^\beta}}{m s_0 \sqrt{n_k}}\,\sqrt{\Delta\tau}}_{\text{centered fluctuation}} \\
+&\quad + \underbrace{\frac{\Delta\tau}{2 m s_0^2 n_k}\left[\bigl(S_\ell^{\alpha\beta} - \overline{S_\ell^\beta}\bigr)^2 - \left(\overline{(S_\ell^\beta)^2} - \bigl(\overline{S_\ell^\beta}\bigr)^2\right)\right]}_{\text{drift-scale correction}}
+  + \mathcal{O}_{\hP}(\Delta\tau^{3/2}).
+\end{aligned}
+\end{equation}
+Conditional on the previous layers (on regions where $\Phi_\ell \in \Lim^{m \times m}$), shaped attention is the identity plus a centered fluctuation of infinitesimal scale $\sqrt{\Delta\tau}$ and a smaller, generally random correction of scale $\Delta\tau$ (with remainder controlled in conditional $L^2$ at scale $\Delta\tau^{3/2} = N^{-3/2}$). When this is inserted into the one-step covariance update $\Phi_{\ell+1} = \frac{1}{N} h_{\ell+1}^\top h_{\ell+1}$, the $\sqrt{\Delta\tau}$-fluctuation generates the diffusion-scale increment, while the internal conditional mean of the $\Delta\tau$-correction, together with quadratic products of $\sqrt{\Delta\tau}$-fluctuations, generates the $\Delta\tau$-drift. The one-step internal drift and covariance therefore lie infinitely close to the coefficients of the candidate SDE, by the same Keisler--It\^o mechanism used in Theorem~\ref{thm:neural_cov_sde};
+the precise hyperfinite Markov-chain lifting theorem is deferred to Theorem~\ref{thm:diffusion-approx}.
+
+\subsection{A Representative SDE Limit Theorem for Shaped Attention}
+\label{subsec:shaped-attn-thm}
+
+The next theorem is an informal column-token restatement of the no-shortcut case of the unmasked, attention-only covariance limit in \cite[Theorem 4.2]{noci2023shaped}, rewritten in our nonstandard $\Phi$-notation.
+
+\begin{theorem}[Neural Covariance SDE for Shaped Attention (Informal)]
+\label{thm:shaped-attn-sde}
+Consider a shaped-attention network at initialization in Definition~\ref{def:shaped-attention}. Let $D, N \in \hNinf$ lie in the proportional galaxy $\st(D/N) = \bar{\tau} \in (0, \infty)$ with $m, n_0, n_k \in \N$ standard. Then the hyperfinite covariance process $\Phi_\tau^{(N)} := \Phi_{\lfloor \tau N \rfloor}$, $0 \le \tau \le \bar{\tau}$, is locally S-continuous $\Loeb$-a.s., and its standard shadow $\Phi_\tau := \st\bigl(\Phi_{\lfloor \tau N \rfloor}\bigr)$ has the law of the solution to the SDE
+\begin{equation}
+\label{eq:ch6-attn-sde}
+d\Phi_\tau = b(\Phi_\tau)\,d\tau + \Sigma(\Phi_\tau)^{1/2}\,dB_\tau, \qquad
+\Phi_0 = \frac{1}{n_0} h_0^\top h_0,
+\end{equation}
+where $B_\tau$ is a standard Brownian motion in $\R^{m(m+1)/2}$ (upper-triangular coordinates). The coefficients are as follows. Write $\Phi^{\alpha\bar{x}} := \frac{1}{m}\sum_{\nu=1}^m \Phi^{\alpha\nu}$ and $\bar{\Phi} := \frac{1}{m}\sum_{\nu=1}^m \Phi^{\nu\nu}$. Further define
+\begin{align}
+R_1^{\alpha\gamma,\beta\delta}(\Phi) &:= \Phi^{\alpha\beta}\bigl(\Phi^{\gamma\delta} - \Phi^{\gamma\bar{x}} - \Phi^{\delta\bar{x}} + \Phi^{\bar{x}\bar{x}}\bigr), \label{eq:ch6-R1} \\
+R_2^{\alpha\gamma}(\Phi) &:= \Phi^{\alpha\alpha}\bigl(\Phi^{\gamma\gamma} - 2\Phi^{\gamma\bar{x}} + 2\Phi^{\bar{x}\bar{x}} - \bar{\Phi}\bigr), \label{eq:ch6-R2}
+\end{align}
+where $\Phi^{\bar{x}\bar{x}} := \frac{1}{m^2}\sum_{\nu,\kappa=1}^m \Phi^{\nu\kappa}$. Then the drift can be written as
+\begin{equation}
+\label{eq:ch6-attn-drift}
+b_{\alpha\beta}(\Phi) = \frac{1}{s_0^2}\left[
+  \frac{1}{m^2}\sum_{\nu,\kappa=1}^m \Phi^{\nu\kappa} R_1^{\alpha\nu,\beta\kappa}(\Phi)
+  + \frac{1}{2m}\sum_{\nu=1}^m \Bigl(\Phi^{\beta\nu} R_2^{\alpha\nu}(\Phi) + \Phi^{\alpha\nu} R_2^{\beta\nu}(\Phi)\Bigr)
+\right].
+\end{equation}
+Moreover the diffusion has the form
+\begin{equation}
+\label{eq:ch6-attn-diff-decomp}
+\Sigma(\Phi) = \Sigma_{\mathrm{lin}}(\Phi) + \frac{1}{s_0^2}\Sigma_{\mathrm{attn}}(\Phi),
+\end{equation}
+where $\Sigma_{\mathrm{lin}}^{\alpha\beta,\gamma\delta}(\Phi) = \Phi^{\alpha\gamma}\Phi^{\beta\delta} + \Phi^{\alpha\delta}\Phi^{\beta\gamma}$ is the linear covariance and
+\begin{equation}
+\label{eq:ch6-attn-diff-term}
+\Sigma_{\mathrm{attn}}^{\alpha\beta,\gamma\delta}(\Phi) := \frac{1}{m^2}\sum_{\nu,\kappa=1}^m
+\begin{pmatrix}
+  \Phi^{\alpha\kappa}\Phi^{\gamma\nu} R_1^{\beta\kappa,\delta\nu}(\Phi) + \Phi^{\alpha\kappa}\Phi^{\delta\nu} R_1^{\beta\kappa,\gamma\nu}(\Phi) \\[0.3em]
+  {}+ \Phi^{\beta\nu}\Phi^{\gamma\kappa} R_1^{\alpha\nu,\delta\kappa}(\Phi) + \Phi^{\beta\nu}\Phi^{\delta\kappa} R_1^{\alpha\nu,\gamma\kappa}(\Phi)
+\end{pmatrix}.
+\end{equation}
+\end{theorem}
+
+\begin{proofsketch}
+For internal layer $\ell \ge 1$, condition on the internal forward filtration $\mathcal{F}_\ell$ from \eqref{eq:internal_filtration}
+and work on limited states $\Phi_\ell \in \ns{K}$ for a standard compact $K \subset \SPD(m)$. Since the layer-$\ell$ weights are internally independent of $\mathcal{F}_\ell$, the rows of $q_\ell$ and $k_\ell$ are conditionally i.i.d.\ $\hNcal(0, \Phi_\ell)$, and the two row families are conditionally independent. The rows of $N^{-1/2} W_\ell^v h_\ell$ have the same exact internal conditional law and are conditionally independent of both families. The infinitesimal concentration $\Phi_1 \approxP \Phi_0$ noted above shows that the single embedding step does not alter the initial shadow $\st(\Phi_1) = \Phi_0$.
+
+With $s = s_0 \sqrt{N n_k}$ and $\Delta\tau = 1/N \approx 0$, the entries of $s^{-1} k_\ell^\top q_\ell$ are of scale $\sqrt{\Delta\tau}$. Applying Lemma~\ref{lem:softmax-expansion} and then the centering and identity shift in \eqref{eq:ch6-shaped-attn-def} gives again
+\begin{equation*}
+\tag{\ref{eq:ch6-shaped-attn-exp}}
+\begin{aligned}
+(A_\ell^s)^{\alpha\beta}
+&= (I_m)^{\alpha\beta}
+  + \frac{S_\ell^{\alpha\beta} - \overline{S_\ell^\beta}}{m s_0 \sqrt{n_k}}\,\sqrt{\Delta\tau} \\
+&\quad + \frac{\Delta\tau}{2 m s_0^2 n_k}\left[\bigl(S_\ell^{\alpha\beta} - \overline{S_\ell^\beta}\bigr)^2 - \left(\overline{(S_\ell^\beta)^2} - \bigl(\overline{S_\ell^\beta}\bigr)^2\right)\right]
+  + \mathcal{O}_{\hP}(\Delta\tau^{3/2}).
+\end{aligned}
+\end{equation*}
+The first correction is a centered fluctuation of scale $\sqrt{\Delta\tau}$, while the second is of scale $\Delta\tau$ and contributes through its internal conditional mean.
+
+Insert this expansion into the covariance update $\Phi_{\ell+1} = \frac{1}{N} h_{\ell+1}^\top h_{\ell+1}$. For this no-shortcut update, the internal covariance recursion and its conditional mean over the value weights are exactly
+\begin{equation}
+\label{eq:ch6-value-cond-mean}
+\Phi_{\ell+1} = \frac{1}{N^2} (A_\ell^s)^\top h_\ell^\top (W_\ell^v)^\top W_\ell^v h_\ell A_\ell^s, \qquad
+\hE\bigl[\Phi_{\ell+1} \mid \mathcal{F}_\ell, A_\ell^s\bigr] = (A_\ell^s)^\top \Phi_\ell A_\ell^s.
+\end{equation}
+Indeed, conditioning on $\mathcal{F}_\ell$ and $A_\ell^s$ leaves $W_\ell^v$ internally independent with i.i.d.\ $\hNcal(0, 1)$ entries, and $\hE[(W_\ell^v)^\top W_\ell^v] = N I_N$. Subtracting $\Phi_\ell$ and expanding the second line of \eqref{eq:ch6-value-cond-mean} around the identity gives
+\begin{equation}
+\label{eq:ch6-value-mean-expand}
+\hE\bigl[\Phi_{\ell+1} - \Phi_\ell \mid \mathcal{F}_\ell, A_\ell^s\bigr]
+= \Phi_\ell(A_\ell^s - I_m) + (A_\ell^s - I_m)^\top \Phi_\ell + (A_\ell^s - I_m)^\top \Phi_\ell (A_\ell^s - I_m).
+\end{equation}
+
+After the value-weight average in \eqref{eq:ch6-value-cond-mean}, the remaining conditional mean is the fresh query--key average of $(A_\ell^s)^\top \Phi_\ell A_\ell^s$. In the column convention here, the first index of $A_\ell^s$ is the key and the second is the query, so multiplying the expansion above gives
+\begin{equation}
+\label{eq:ch6-attn-pair-mean}
+\begin{aligned}
+\hE\bigl[(A_\ell^s)^{\nu\alpha} (A_\ell^s)^{\kappa\beta} \mid \mathcal{F}_\ell\bigr]
+&= \delta_{\nu\alpha}\delta_{\kappa\beta}
+  + \frac{\Delta\tau}{s_0^2}\left[
+      \frac{1}{m^2} R_1^{\alpha\nu,\beta\kappa}(\Phi_\ell)
+      + \frac{1}{2m}\Bigl(\delta_{\kappa\beta} R_2^{\alpha\nu}(\Phi_\ell) + \delta_{\nu\alpha} R_2^{\beta\kappa}(\Phi_\ell)\Bigr)
+    \right] \\
+&\quad + o(\Delta\tau),
+\end{aligned}
+\end{equation}
+where $o(\Delta\tau)$ denotes a remainder that is $o(1)\,\Delta\tau$ uniformly for $\Phi_\ell \in \ns{K}$. The linear means vanish; the linear--linear product is the centered score moment in \eqref{eq:ch6-centered-score-cov} and gives $R_1$, while the two identity--quadratic products use the exact internal conditional expectation
+\begin{equation}
+\label{eq:ch6-R2-moment}
+\frac{1}{n_k}\,\hE\!\left[\bigl(S_\ell^{\nu\alpha} - \overline{S_\ell^\alpha}\bigr)^2 - \left(\overline{(S_\ell^\alpha)^2} - \bigl(\overline{S_\ell^\alpha}\bigr)^2\right) \;\middle|\; \mathcal{F}_\ell\right] = R_2^{\alpha\nu}(\Phi_\ell).
+\end{equation}
+Products containing at least three $\sqrt{\Delta\tau}$-scale factors, together with the internal Softmax remainder, are $o(\Delta\tau)$ on $\ns{K}$; this is the transferred column-index transpose of the pair calculation in \cite[Lemmas C.2--C.3]{noci2023shaped}. Thus the internal tower property and contraction with $\Phi_\ell$ give
+\begin{equation}
+\label{eq:ch6-drift-derivation}
+\begin{aligned}
+\hE\bigl[\Phi_{\ell+1}^{\alpha\beta} \mid \mathcal{F}_\ell\bigr]
+&= \sum_{\nu,\kappa=1}^m \Phi_\ell^{\nu\kappa}\,\hE\bigl[(A_\ell^s)^{\nu\alpha} (A_\ell^s)^{\kappa\beta} \mid \mathcal{F}_\ell\bigr] \\
+&= \Phi_\ell^{\alpha\beta}
+   + \frac{\Delta\tau}{s_0^2}\biggl[
+       \frac{1}{m^2}\sum_{\nu,\kappa=1}^m \Phi_\ell^{\nu\kappa} R_1^{\alpha\nu,\beta\kappa}(\Phi_\ell) \\
+&\qquad\qquad\qquad {}+ \frac{1}{2m}\sum_{\nu=1}^m \Bigl(\Phi_\ell^{\beta\nu} R_2^{\alpha\nu}(\Phi_\ell) + \Phi_\ell^{\alpha\nu} R_2^{\beta\nu}(\Phi_\ell)\Bigr)
+     \biggr]
+   + o(\Delta\tau) \\
+&= \Phi_\ell^{\alpha\beta} + b_{\alpha\beta}(\Phi_\ell)\,\Delta\tau + o(\Delta\tau),
+\end{aligned}
+\end{equation}
+where symmetry of $\Phi_\ell$ is used in the $R_2$ contractions, and the final line matches \eqref{eq:ch6-attn-drift}.
+
+After flattening the upper-triangular entries, the two sources of covariance are separated exactly by the internal conditional covariance formula:
+\begin{equation}
+\label{eq:ch6-total-cov-decomp}
+\hCov\bigl(\Phi_{\ell+1} - \Phi_\ell \mid \mathcal{F}_\ell\bigr)
+= \hE\bigl[\hCov(\Phi_{\ell+1} \mid \mathcal{F}_\ell, A_\ell^s) \mid \mathcal{F}_\ell\bigr]
+  + \hCov\bigl((A_\ell^s)^\top \Phi_\ell A_\ell^s \mid \mathcal{F}_\ell\bigr).
+\end{equation}
+The first term is the internal Gaussian sample-covariance fluctuation from the value weights, and the second is the fluctuation of the conditional mean caused by shaped attention. The value-weight contribution can be computed exactly. Conditional on $\mathcal{F}_\ell$ and $A_\ell^s$, the $N$ output rows are internally i.i.d.\ centered Gaussian with covariance $(A_\ell^s)^\top \Phi_\ell A_\ell^s$. Their empirical covariance is $\Phi_{\ell+1}$, so transferred Isserlis' identity gives
+\begin{equation}
+\label{eq:ch6-value-isserlis}
+\hCov\bigl(\Phi_{\ell+1}^{\alpha\beta}, \Phi_{\ell+1}^{\gamma\delta} \mid \mathcal{F}_\ell, A_\ell^s\bigr)
+= \Delta\tau\,\Sigma_{\mathrm{lin}}^{\alpha\beta,\gamma\delta}\bigl((A_\ell^s)^\top \Phi_\ell A_\ell^s\bigr).
+\end{equation}
+Since $A_\ell^s - I_m = \mathcal{O}_{\hP}(\sqrt{\Delta\tau})$ with bounded conditional moments on $\ns{K}$, averaging this identity over shaped attention gives $\Delta\tau\,\Sigma_{\mathrm{lin}}(\Phi_\ell) + o(\Delta\tau)$.
+
+For the attention branch, the score entries are conditionally centered, and internal independence of the key and query row families gives
+\begin{align}
+\frac{1}{n_k}\,\hE\bigl[S_\ell^{\alpha\beta} S_\ell^{\gamma\delta} \mid \mathcal{F}_\ell\bigr] &= \Phi_\ell^{\alpha\gamma} \Phi_\ell^{\beta\delta}, \label{eq:ch6-raw-score-cov} \\
+\frac{1}{n_k}\,\hE\Bigl[\bigl(S_\ell^{\kappa\beta} - \overline{S_\ell^\beta}\bigr)\bigl(S_\ell^{\nu\delta} - \overline{S_\ell^\delta}\bigr) \;\Big|\; \mathcal{F}_\ell\Bigr] &= R_1^{\beta\kappa,\delta\nu}(\Phi_\ell). \label{eq:ch6-centered-score-cov}
+\end{align}
+Indeed, when the scores are expanded as sums over the $n_k$ rows, only equal row indices survive in the first line; the second follows by expanding the two column means over the key index. This also explains the index order $R_1^{\beta\kappa,\delta\nu}$: the outside pair records the query covariance, while the centered pair records the key covariance.
+
+At scale $\Delta\tau$ in the conditional covariance, only the two linear summands $\Phi_\ell(A_\ell^s - I_m)$ and $(A_\ell^s - I_m)^\top \Phi_\ell$ contribute to the attention fluctuation. By \eqref{eq:ch6-shaped-attn-exp}, the leading $(\kappa, \beta)$ entry of $A_\ell^s - I_m$ is $(S_\ell^{\kappa\beta} - \overline{S_\ell^\beta})\sqrt{\Delta\tau}/(m s_0 \sqrt{n_k})$. Substituting this term and using the conditional score moments, the rescaled internal covariance of the first linear summand with itself satisfies
+\begin{equation}
+\label{eq:ch6-first-attn-pairing}
+N\,\hCov\Bigl([\Phi_\ell(A_\ell^s - I_m)]_{\alpha\beta},\, [\Phi_\ell(A_\ell^s - I_m)]_{\gamma\delta} \;\Big|\; \mathcal{F}_\ell\Bigr)
+= \frac{1}{m^2 s_0^2}\sum_{\kappa,\nu=1}^m \Phi_\ell^{\alpha\kappa}\Phi_\ell^{\gamma\nu} R_1^{\beta\kappa,\delta\nu}(\Phi_\ell) + o(1),
+\end{equation}
+with $o(1) \approx 0$ uniformly on $\ns{K}$. After removing the common factor $s_0^{-2}$, this is the first contraction in $\Sigma_{\mathrm{attn}}$. The other three pairings among the two linear summands give the remaining three contractions. Although the first-order score fluctuation is conditionally centered, the full $A_\ell^s - I_m$ has a conditional mean of scale $\Delta\tau$, which is why the display uses conditional covariance. Combining these four pairings with \eqref{eq:ch6-total-cov-decomp} and \eqref{eq:ch6-value-isserlis}, and using that $\Phi_\ell$ is $\mathcal{F}_\ell$-measurable, gives
+\begin{equation}
+\label{eq:ch6-total-rescaled-cov}
+N\,\hCov\bigl(\Phi_{\ell+1}^{\alpha\beta} - \Phi_\ell^{\alpha\beta},\, \Phi_{\ell+1}^{\gamma\delta} - \Phi_\ell^{\gamma\delta} \mid \mathcal{F}_\ell\bigr)
+= \Sigma_{\mathrm{lin}}^{\alpha\beta,\gamma\delta}(\Phi_\ell) + \frac{1}{s_0^2}\Sigma_{\mathrm{attn}}^{\alpha\beta,\gamma\delta}(\Phi_\ell) + o(1)
+\approx \Sigma^{\alpha\beta,\gamma\delta}(\Phi_\ell).
+\end{equation}
+
+These leading internal conditional moments are summarized by the Keisler--It\^o hyperfinite difference form from \eqref{eq:kem_step}:
+\begin{equation}
+\label{eq:ch6-keisler-ito-attn}
+\Phi_{\ell+1} - \Phi_\ell = b(\Phi_\ell)\,\Delta\tau + \Sigma(\Phi_\ell)^{1/2}\,\Delta B_\ell + \tilde{o}_\ell(\Delta\tau).
+\end{equation}
+Conditional on $\mathcal{F}_\ell$, the hyperfinite Brownian increment $\Delta B_\ell := \sqrt{\Delta\tau}\,\xi_\ell$ is centered with covariance $\Delta\tau\,I_{m(m+1)/2}$ in the upper-triangular coordinates, and the conditional remainder $\tilde{o}_\ell(\Delta\tau)$ satisfies $\norm{\hE[\tilde{o}_\ell(\Delta\tau)\mid\mathcal{F}_\ell]}_F = o(\Delta\tau)$ and $\hE[\norm{\tilde{o}_\ell(\Delta\tau) - \hE[\tilde{o}_\ell(\Delta\tau)\mid\mathcal{F}_\ell]}_F^2 \mid \mathcal{F}_\ell] = o(\Delta\tau)$ as in \eqref{eq:cond_o_tilde}
+(together with $N\,\hE[\norm{\Phi_{\ell+1}-\Phi_\ell}_F^3 \mid \mathcal{F}_\ell] \approx 0$ uniformly on $\ns{K}$). The preceding one-step infinitesimal estimates verify the hypotheses of the hyperfinite Markov-chain diffusion theorem in Theorem~\ref{thm:diffusion-approx}, which completes the proof.
+\end{proofsketch}
+
+\begin{remark}[Residual Shortcuts]
+\label{rem:shaped-attn-shortcuts}
+The theorem isolates the shaped-attention mechanism through an attention-only recursion. Noci et al.\ also allow a weighted identity shortcut around the shaped-attention branch, with complementary branch strengths chosen to preserve variance; their theorem shows how these strengths rescale the limiting drift and covariance \cite[Theorem 4.2]{noci2023shaped}. We suppress that extension here.
+\end{remark}
+
+\begin{remark}[Full Transformer Blocks]
+\label{rem:full-transformer-blocks}
+A full Transformer block composes shaped attention with a feedforward sublayer. In the same no-shortcut specialization as Theorem~\ref{thm:shaped-attn-sde}, its internal column-token recursion at width $N \in \hNinf$ can be written as
+\begin{equation}
+\label{eq:ch6-full-block-rec}
+\begin{aligned}
+\widetilde{h}_\ell &= \frac{1}{\sqrt{N}} W_\ell^v h_\ell A_\ell^s, &
+h_{\ell+1} &= \sqrt{\frac{c}{N}}\,W_\ell^2\,\phi_s\!\left(\frac{1}{\sqrt{N}} W_\ell^1 \widetilde{h}_\ell\right), \\
+\phi_s(x) &:= s_+ \max\{x, 0\} + s_- \min\{x, 0\}, &
+s_\pm &= 1 + \frac{c_\pm}{\sqrt{N}}.
+\end{aligned}
+\end{equation}
+Here $\widetilde{h}_\ell$ is the intermediate state after shaped attention, while $h_\ell$ and $h_{\ell+1}$ are the states at consecutive full-block boundaries. Thus $\Phi_\ell = N^{-1} h_\ell^\top h_\ell$ records the covariance at those boundaries. The activation is applied entrywise, and the width-dependent normalization $c = c(N) \approx 1$ is chosen so that $c^{-1} = \hE[\phi_s(g)^2]$ for $g \sim \hNcal(0, 1)$. Thus $\phi_s$ is precisely the critically shaped ReLU from \eqref{eq:relu_like_shaping}.
+Here the subscript $s$ refers to the slopes $s_\pm$, not to the attention temperature used in $A_\ell^s$. The matrices $W_\ell^1, W_\ell^2 \in \hR^{N \times N}$ have internally i.i.d.\ $\hNcal(0, 1)$ entries; across the two weight types and all layers, they are mutually independent and independent of all query, key, and value weights.
+
+Let $b_{\mathrm{ReLU}}$ denote the shaped-ReLU drift in \eqref{eq:drift_relu_like}.
+Then \cite[Theorem 3.2 and Corollary 4.3]{noci2023shaped} gives the corresponding combined shadow SDE
+\begin{equation}
+\label{eq:ch6-full-block-sde}
+d\Phi_\tau = \bigl[b(\Phi_\tau) + b_{\mathrm{ReLU}}(\Phi_\tau)\bigr]\,d\tau + \bigl[\Sigma(\Phi_\tau) + 2\Sigma_{\mathrm{lin}}(\Phi_\tau)\bigr]^{1/2}\,dB_\tau.
+\end{equation}
+Here $b$ and $\Sigma$ are the shaped-attention coefficients in Theorem~\ref{thm:shaped-attn-sde}, while the feedforward sublayer contributes $b_{\mathrm{ReLU}}$ and $2\Sigma_{\mathrm{lin}}$ because it contains two fresh internal Gaussian matrices. Conditional on the completed attention sublayer, and hence on $\widetilde{h}_\ell$, the fluctuation generated by the fresh feedforward weights is centered. The internal tower property therefore eliminates its cross-covariance with the preceding attention fluctuation at scale $\Delta\tau$. The instantaneous covariance matrices add inside the square root; the two square-root diffusion coefficients are not added directly.
+\end{remark}
+
+\section{Spectrum Results for the Covariance SDE}
+\label{sec:spectrum-results}
+
+We now return to the deep linear network studied in Chapter~\ref{ch:depth}
+and ask what its covariance SDE implies for the spectrum. The affine invariance of the linear model leads to explicit eigenvalue dynamics via infinitesimal Hadamard perturbation and a tractable mean-field spectral limit. The results are adapted from \cite{li2026geometric}.
+
+\subsection{Recall: The Linear Covariance SDE}
+\label{subsec:recall-linear-sde}
+
+Stack the standard inputs $x^1, \dots, x^m \in \R^{n_0}$ as the columns of $h_0$. At unlimited width $N \in \hNinf$, let $W_0 \in \hR^{N \times n_0}$ and $W_\ell \in \hR^{N \times N}$ for $\ell \ge 1$ have internally i.i.d.\ $\hNcal(0, 1)$ entries. As in Chapter~\ref{ch:depth}, set
+\begin{equation}
+\label{eq:ch6-linear-rec}
+h_1 = \frac{1}{\sqrt{n_0}} W_0 h_0, \quad
+h_{\ell+1} = \frac{1}{\sqrt{N}} W_\ell h_\ell, \;\; \ell \ge 1, \quad
+\Phi_0 = \frac{1}{n_0} h_0^\top h_0, \quad
+\Phi_\ell = \frac{1}{N} h_\ell^\top h_\ell, \;\; \ell \ge 1.
+\end{equation}
+Fix standard $m \in \N$, let $\bar{m} := m(m+1)/2$, and flatten $\Phi$ into its distinct upper-triangular entries, indexed by $\alpha \le \beta$. On every bounded time interval, the hyperfinite covariance trajectory $\Phi_\tau^{(N)} := \Phi_{\lfloor \tau N \rfloor}$ is S-continuous $\Loeb$-a.s., and its standard shadow $\Phi_\tau := \st\bigl(\Phi_{\lfloor \tau N \rfloor}\bigr)$ solves the linear covariance SDE
+\begin{equation}
+\label{eq:ch6-linear-cov-sde}
+d\Phi_\tau = \Sigma(\Phi_\tau)^{1/2}\,dB_\tau, \qquad
+\Sigma_{\alpha\beta,\gamma\delta}(\Phi) = \Phi_{\alpha\gamma}\Phi_{\beta\delta} + \Phi_{\alpha\delta}\Phi_{\beta\gamma}, \quad \alpha \le \beta,\; \gamma \le \delta.
+\end{equation}
+Here $B$ is standard Brownian motion in $\R^{\bar{m}}$; at terminal depths $D \in \hNinf$ with $\st(D/N) = \bar{\tau}$, the terminal covariance shadow therefore satisfies $\st(\Phi_D) \eqd \Phi_{\bar{\tau}}$. This is precisely the linear covariance shadow in Theorem~\ref{thm:linear_cov_sde}.
+In particular, Proposition~\ref{prop:isserlis_gram} and \eqref{eq:sigma_tensor_def}
+identify the diffusion tensor $\Sigma$, while \eqref{eq:linear_cov_sde}
+gives the SDE in the notation of Chapter~\ref{ch:depth}.
+
+\subsection{Affine Invariance}
+\label{subsec:affine-invariance}
+
+A key structural feature of \eqref{eq:ch6-linear-cov-sde} is its invariance under congruence transformations $\Phi \mapsto A\Phi A^\top$.
+
+\begin{lemma}[Affine Invariance of the Covariance Markov Chain]
+\label{lem:affine-invariance}
+Let $P$ denote the internal one-step covariance update $\Phi_\ell \mapsto \Phi_{\ell+1}$ at width $N \in \hNinf$ induced by the linear recursion \eqref{eq:ch6-linear-rec}. Then for every $A \in \ns{\GL}(m, \R)$ (and in particular every standard $A \in \GL(m, \R)$),
+\begin{equation}
+\label{eq:ch6-chain-congruence}
+A P(\Phi) A^\top \eqd P(A\Phi A^\top).
+\end{equation}
+Consequently, the stochastic flow of the shadow SDE \eqref{eq:ch6-linear-cov-sde} is affine-invariant: if $\Phi_\tau$ solves \eqref{eq:ch6-linear-cov-sde} with initial condition $\Phi_0$, then $A\Phi_\tau A^\top$ has the same law as the solution started from $A\Phi_0 A^\top$.
+\end{lemma}
+
+\begin{proof}
+The argument is immediate at the internal Markov-chain level by the Transfer Principle. Condition on $\Phi$ and sample $N$ internally i.i.d.\ Gaussian vectors $(g_i)_{i=1}^N \subset \hR^m$ with $g_i \sim \hNcal(0, \Phi)$. Then the internal update can be written in distribution as
+\begin{equation}
+\label{eq:ch6-wishart-step}
+P(\Phi) = \frac{1}{N}\sum_{i=1}^N g_i g_i^\top.
+\end{equation}
+Equivalently, stacking $g_i$ as rows gives $G \in \hR^{N \times m}$ with $\operatorname{vec}(G) \sim \hNcal(0, \Phi \otimes I_N)$ and $P(\Phi) = \frac{1}{N} G^\top G$. Now replace $\Phi$ by $A\Phi A^\top$. By Transfer of the Kronecker identity $(A\Phi A^\top) \otimes I_N = (A \otimes I_N)(\Phi \otimes I_N)(A^\top \otimes I_N)$, we can couple the internal Gaussian matrices so that
+\begin{equation}
+\label{eq:ch6-coupled-G}
+G' = G A^\top \implies \operatorname{vec}(G') \sim \hNcal\bigl(0, (A\Phi A^\top) \otimes I_N\bigr).
+\end{equation}
+Then in internal distribution,
+\begin{equation}
+\label{eq:ch6-congruence-proof}
+P(A\Phi A^\top) \eqd \frac{1}{N} (G')^\top G' = \frac{1}{N} A G^\top G A^\top = A P(\Phi) A^\top,
+\end{equation}
+which is the desired internal invariance. For standard $A \in \GL(m, \R)$, continuity of $\Phi \mapsto A\Phi A^\top$ commutes with $\st(\cdot)$ along the hyperfinite trajectory $\ell = \lfloor \tau N \rfloor$, transferring congruence invariance directly to the standard shadow SDE \eqref{eq:ch6-linear-cov-sde}.
+\end{proof}
+
+The set $\SPD(m)$ of $m \times m$ symmetric positive-definite matrices is a smooth manifold with tangent space $T_\Phi \SPD(m) \cong \Sym(m)$. This geometry is not needed to use the covariance SDE, but it explains the special structure of its noise.
+
+\begin{proposition}[$\Sigma^{-1}$: Affine-Invariant Metric]
+\label{prop:affine-metric}
+For $\Phi \in \SPD(m)$ and $A, B \in T_\Phi \SPD(m) \cong \Sym(m)$, the affine-invariant Riemannian metric is
+\begin{equation}
+\label{eq:ch6-affine-metric}
+g_\Phi(A, B) := \frac{1}{2}\Tr(\Phi^{-1} A \Phi^{-1} B).
+\end{equation}
+It is invariant under congruences: for every $P \in \GL(m, \R)$,
+\begin{equation}
+\label{eq:ch6-metric-invariance}
+g_{P\Phi P^\top}(P A P^\top, P B P^\top) = g_\Phi(A, B).
+\end{equation}
+In the distinct upper-triangular coordinates on $\Sym(m)$ used in Chapter~\ref{ch:depth}, the matrix representing this metric is $\Sigma(\Phi)^{-1}$. A proof is given in Appendix~\ref{sec:appa-metric}; see also \cite[Proposition 2.5]{li2026geometric}.
+\end{proposition}
+
+Thus $\Sigma$ is the cometric associated with \eqref{eq:ch6-affine-metric}; its multiplicative structure leads to the Dyson-type eigenvalue dynamics studied next.
+
+\subsection{Geometric Dyson Brownian Motion}
+\label{subsec:geom-dyson-bm}
+
+For the spectral calculation, it is useful to realize the same diffusion in matrix form. Let $S_\tau$ be symmetric Brownian motion on $\Sym(m)$, normalized so that
+\begin{equation}
+\label{eq:ch6-sym-bm-sde}
+d\ip{S_{\alpha\beta}}{S_{\gamma\delta}}_\tau = \bigl(\delta_{\alpha\gamma}\delta_{\beta\delta} + \delta_{\alpha\delta}\delta_{\beta\gamma}\bigr)\,d\tau, \qquad
+d\Phi_\tau = \Phi_\tau^{1/2}\,dS_\tau\,\Phi_\tau^{1/2}.
+\end{equation}
+On the hyperfinite grid $\tau_\ell = \ell\,\Delta\tau$ ($\Delta\tau = 1/N \approx 0$), Anderson's hyperfinite symmetric Brownian increment $\Delta S_\ell \in \ns{\Sym}(m)$ satisfies $\hCov(\Delta S_{\ell,\alpha\beta}, \Delta S_{\ell,\gamma\delta} \mid \mathcal{F}_\ell) = (\delta_{\alpha\gamma}\delta_{\beta\delta} + \delta_{\alpha\delta}\delta_{\beta\gamma})\,\Delta\tau$, and the multiplicative Keisler step $\Delta\Phi_\ell = \Phi_\ell^{1/2}\,\Delta S_\ell\,\Phi_\ell^{1/2}$ has exact conditional covariance $\Sigma(\Phi_\ell)\,\Delta\tau$ matching \eqref{eq:ch6-linear-cov-sde}, so the two SDEs have the same shadow law.
+
+Let $\lambda_1(\tau) \le \dots \le \lambda_m(\tau)$ denote the eigenvalues of $\Phi_\tau$.
+
+\begin{theorem}[Geometric Dyson Brownian Motion]
+\label{thm:geom-dyson-bm}
+Let $\Phi_\tau$ solve \eqref{eq:ch6-linear-cov-sde} with $\Phi_0 \in \SPD(m)$. Then the spectrum is almost surely simple for every $\tau > 0$, and the ordered eigenvalues satisfy, locally on $(0, \infty)$,
+\begin{equation}
+\label{eq:ch6-geom-dyson-sde}
+d\lambda_i = \sqrt{2}\,\lambda_i\,dB_\tau^{(i)} + \sum_{j \neq i} \frac{\lambda_i \lambda_j}{\lambda_i - \lambda_j}\,d\tau, \qquad i = 1, \dots, m,
+\end{equation}
+where $(B_\tau^{(i)})_{i=1}^m$ are independent standard Brownian motions. If $\Phi_0$ has simple spectrum, the system holds from $\tau = 0$ and the eigenvalues never collide.
+\end{theorem}
+
+\begin{proof}
+We derive the eigenvalue evolution via infinitesimal Hadamard perturbation on the hyperfinite grid (cf.\ \cite{keisler1984infinitesimal} and eigenvalue computations for Wishart-type processes). The calculation is local on $\ns{U}$, where $U \subset \SPD(m)$ is the standard open set of matrices with simple spectrum; on any compact $K \subset U$, every eigenvalue gap $\lambda_i - \lambda_j$ ($i \neq j$) of $\Phi_\ell \in \ns{K}$ is appreciable ($\in \App$). At step $\ell$, choose an internal orthonormal eigenbasis of $\Phi_\ell$; by the transferred orthogonal invariance in Lemma~\ref{lem:affine-invariance}, we may compute in coordinates where $\Phi_\ell = \diag(\lambda_1, \dots, \lambda_m)$. For an internal symmetric perturbation $\Psi \in \ns{\Sym}(m)$, transferring the first and second Hadamard variation formulae gives
+\begin{equation}
+\label{eq:ch6-hadamard-var}
+\ip{\nabla\lambda_i(\Phi_\ell)}{\Psi} = \Psi_{ii}, \qquad
+\nabla^2\lambda_i(\Phi_\ell)[\Psi, \Psi] = 2 \sum_{j \neq i} \frac{\Psi_{ij}^2}{\lambda_i - \lambda_j}.
+\end{equation}
+In this eigenbasis, the hyperfinite realization $\Delta\Phi_\ell = \Phi_\ell^{1/2}\,\Delta S_\ell\,\Phi_\ell^{1/2}$ of \eqref{eq:ch6-sym-bm-sde} gives $\Delta\Phi_{ij} = \sqrt{\lambda_i \lambda_j}\,\Delta S_{\ell,ij}$, and hence the conditional quadratic moments
+\begin{equation}
+\label{eq:ch6-eigenbasis-qv}
+\hE\bigl[\Delta\Phi_{ii}\,\Delta\Phi_{jj} \mid \mathcal{F}_\ell\bigr] = 2\lambda_i^2 \delta_{ij}\,\Delta\tau, \qquad
+\hE\bigl[(\Delta\Phi_{ij})^2 \mid \mathcal{F}_\ell\bigr] = \lambda_i \lambda_j\,\Delta\tau \quad (i \neq j).
+\end{equation}
+Since $\lambda_i - \lambda_j \in \App$ for $j \neq i$ on $\ns{K}$ and $\norm{\Delta\Phi_\ell}_F = \mathcal{O}_{\hP}(\sqrt{\Delta\tau}) \approx 0$, internal second-order Taylor expansion of $\lambda_i(\Phi_\ell + \Delta\Phi_\ell)$ yields the infinitesimal Hadamard expansion
+\begin{equation}
+\label{eq:ch6-ito-eigenvalue}
+\Delta\lambda_i = \Delta\Phi_{ii} + \sum_{j \neq i} \frac{(\Delta\Phi_{ij})^2}{\lambda_i - \lambda_j} + o(\Delta\tau),
+\end{equation}
+where the cubic Taylor remainder $\mathcal{O}(\norm{\Delta\Phi_\ell}_F^3)$ has conditional expectation and conditional $L^2$ norm of order $\Delta\tau^{3/2} = o(\Delta\tau)$ on $\ns{K}$. Moreover, for $j \neq i$, the centered square $(\Delta\Phi_{ij})^2 - \lambda_i \lambda_j\,\Delta\tau$ has conditional mean zero and conditional variance $\mathcal{O}(\Delta\tau^2) = o(\Delta\tau)$, so each off-diagonal square concentrates onto $\lambda_i \lambda_j\,\Delta\tau$ up to $\tilde{o}_\ell(\Delta\tau)$. Meanwhile, the diagonal moments in \eqref{eq:ch6-eigenbasis-qv} show that $\Delta\Phi_{ii} = \sqrt{2}\,\lambda_i\,\Delta B_\ell^{(i)}$ for uncorrelated hyperfinite Brownian increments $(\Delta B_\ell^{(i)})_{i=1}^m$. Taking standard parts via Theorem~\ref{thm:diffusion-approx} gives \eqref{eq:ch6-geom-dyson-sde} up to the first collision. The absence of collisions from a simple initial spectrum, and instantaneous simplicity from an arbitrary positive-definite initial spectrum, are proved in \cite[Theorem 1.1 and Appendix B]{li2026geometric}.
+\end{proof}
+
+\subsection{Mean Field Limit, a Burgers PDE, and a Fixed Point Equation}
+\label{subsec:burgers-pde}
+
+Having obtained the standard eigenvalue diffusion \eqref{eq:ch6-geom-dyson-sde} for every standard token dimension $m \in \N$, we now transfer that diffusion family to an unlimited spectral dimension $M \in \hNinf$ on the accelerated spectral clock $\tau / M$. Write $\mu_i(\tau) := \ns{\lambda}_i(\tau / M)$ for $i = 1, \dots, M$. Then the hyperfinite empirical spectral measure of the time-changed covariance is
+\begin{equation}
+\label{eq:ch6-emp-spec-meas}
+\rho_\tau^{(M)} := \frac{1}{M}\sum_{i=1}^M \delta_{\mu_i(\tau)}.
+\end{equation}
+The time change $\tau \mapsto \tau / M$ normalizes the pairwise interaction drift in \eqref{eq:ch6-geom-dyson-sde} to $\Lim$ (order one) at unlimited $M \in \hNinf$, and simultaneously shrinks each eigenvalue's diffusion scale to $M^{-1/2} \approx 0$. The scales here are sequential (corresponding to $1 \ll M \ll N$): first the proportional depth--width shadow at fixed dimension gives the covariance SDE and its eigenvalue diffusion \eqref{eq:ch6-geom-dyson-sde}, and only then do we apply the time change $\tau \mapsto \tau/M$ at an unlimited spectral dimension $M \in \hNinf$. No simultaneous three-parameter limit without scale separation is asserted.
+
+The $T$-transform is useful here because the multiplicative eigenvalue interaction becomes a closed equation for a single analytic function. For a standard probability measure $\rho_\tau$ on $\R_{\ge 0}$, define the $T$-transform
+\begin{equation}
+\label{eq:ch6-T-transform}
+G_\tau(z) := \int_\R \frac{x}{z - x}\,\rho_\tau(dx), \qquad z \in \C \setminus \R_{\ge 0}.
+\end{equation}
+(Equivalently, $G_\tau(z) = z\,g_\tau(z) - 1$ where $g_\tau$ is the Stieltjes transform.)
+
+\begin{remark}[$T$-Transform Inversion]
+\label{rem:t-transform-inversion}
+Let $g_\tau(z) := \int_\R \frac{1}{z - x}\,\rho_\tau(dx)$ be the Stieltjes transform. Whenever $\rho_\tau$ admits a continuous density (which we denote by the same symbol) at a point $x \in \R$, the standard Stieltjes inversion formula gives
+\begin{equation}
+\label{eq:ch6-stieltjes-inv}
+\rho_\tau(x) = -\frac{1}{\pi}\lim_{\varepsilon \downarrow 0} \Im g_\tau(x + i\varepsilon)
+= -\frac{1}{\pi}\,\st\bigl(\Im \ns{g}_\tau(x + i\varepsilon)\bigr) \quad (\varepsilon \in \hR_{>0} \cap \Inf).
+\end{equation}
+Since $g_\tau(z) = \frac{G_\tau(z) + 1}{z}$, we can equivalently write this in terms of the $T$-transform:
+\begin{equation}
+\label{eq:ch6-T-inv}
+\rho_\tau(x) = -\frac{1}{\pi}\lim_{\varepsilon \downarrow 0} \Im\!\left(\frac{G_\tau(x + i\varepsilon) + 1}{x + i\varepsilon}\right).
+\end{equation}
+\end{remark}
+
+The path-level limit and Burgers equation below are proved in \cite[Theorem 1.2]{li2026geometric}; the identity-start fixed point is \cite[Corollary 1.3]{li2026geometric}.
+
+\begin{theorem}[Burgers PDE and Fixed Point]
+\label{thm:burgers-fixed-point}
+Assume that at unlimited $M \in \hNinf$ the initial hyperfinite empirical measure $\rho_0^{(M)}$ has limited first moment $\int_{\hR_{\ge 0}} x\,\rho_0^{(M)}(dx) \in \Lim$ and deterministic Loeb weak shadow $\rho_0 = L(\rho_0^{(M)}) \circ \st^{-1}$ (equivalently, $\rho_0^{(m)} \xrightarrow{w} \rho_0$ with uniformly bounded first moments). Then $\rho_\tau^{(M)}$ concentrates $\Loeb$-infinitesimally, uniformly on compact standard time intervals in the weak topology, around a deterministic continuous measure path $\rho_\tau$ whose $T$-transform satisfies the inviscid Burgers-type PDE
+\begin{equation}
+\label{eq:ch6-burgers-pde}
+\partial_\tau G_\tau(z) = -z\,G_\tau(z)\,\partial_z G_\tau(z).
+\end{equation}
+If moreover $\rho_0 = \delta_1$, then $G_\tau(z)$ is the physical branch of the fixed point equation
+\begin{equation}
+\label{eq:ch6-fixed-point}
+G_\tau(z) = \frac{1}{z\,e^{-\tau G_\tau(z)} - 1}.
+\end{equation}
+\end{theorem}
+
+\begin{remark}[Free Log-Normal Fixed Point]
+\label{rem:free-lognormal}
+The identity-start limit $\rho_\tau$ turns out to be the mean-one free log-normal law, the multiplicative free-convolution analogue of the classical log-normal law. This identification is most transparent through the $S$-transform, which turns multiplicative free convolution into multiplication \cite{bercovici1992levy}. For the compactly supported law $\rho_\tau$ \cite[Corollary 4.1]{li2026geometric}, define $\psi_\tau(u) := G_\tau(u^{-1})$, and let $\chi_\tau$ be its local compositional inverse near the origin. The $S$-transform of $\rho_\tau$ is then $S_{\rho_\tau}(w) := (1 + w)\chi_\tau(w)/w$. For $z$ near infinity, taking $w = G_\tau(z)$ gives $\chi_\tau(w) = z^{-1}$, while \eqref{eq:ch6-fixed-point} rearranges to $z^{-1} = e^{-\tau w} w / (1 + w)$. Consequently, $S_{\rho_\tau}(w) = e^{-\tau w}$, the $S$-transform of the mean-one free log-normal law \cite[Corollary 1.3 and Section 4]{li2026geometric}. See also \cite[Section 16.3]{potters2020first} for a physics-oriented treatment.
+\end{remark}
+
+\begin{remark}[Physical Branch]
+\label{rem:physical-branch}
+In the identity-start case, the fixed-point equation may admit several analytic branches. The $T$-transform in Theorem~\ref{thm:burgers-fixed-point} is selected by $G_\tau(z) \sim z^{-1}$ as $z \to \infty$; this choice is called the physical branch.
+\end{remark}
+
+\begin{proofsketch}[Proof Sketch for Theorem~\ref{thm:burgers-fixed-point}]
+We first derive the Burgers equation via hyperfinite empirical concentration. Fix standard $z \in \C \setminus \R_{\ge 0}$ and let $f_z(x) := \frac{x}{z - x}$. Note that $x f_z'(x) = \frac{z x}{(z - x)^2}$ and $x^2 f_z''(x) = \frac{2 z x^2}{(z - x)^3}$ are uniformly bounded on $\R_{\ge 0}$. On each positive-time interval, after relabeling the rescaled transferred Brownian motions $\sqrt{M}\,\ns{B}_{\tau/M}^{(i)}$ as $B_\tau^{(i)}$, the transferred time-changed form of \eqref{eq:ch6-geom-dyson-sde} is
+\begin{equation}
+\label{eq:ch6-time-changed-dyson}
+d\mu_i(\tau) = \sqrt{\frac{2}{M}}\,\mu_i(\tau)\,dB_\tau^{(i)} + \frac{1}{M}\sum_{j \neq i} \frac{\mu_i(\tau)\mu_j(\tau)}{\mu_i(\tau) - \mu_j(\tau)}\,d\tau.
+\end{equation}
+Applying transferred It\^o's formula to $\ip{\ns{f}_z}{\rho_\tau^{(M)}} = \frac{1}{M}\sum_{i=1}^M \ns{f}_z(\mu_i(\tau))$, the martingale part has quadratic variation $\frac{2}{M^3}\sum_{i=1}^M \int_0^\tau \abs{\mu_i(s)\ns{f}_z'(\mu_i(s))}^2\,ds = \mathcal{O}(M^{-2}) \approx 0$ (hence vanishes uniformly in $\Loeb$-probability by Doob's inequality), while the second-order It\^o correction $\frac{1}{M^2}\sum_{i=1}^M \mu_i^2 \ns{f}_z''(\mu_i)$ is bounded by $\mathcal{O}(M^{-1}) \approx 0$. Suppressing the common time argument, the S-derivative of the empirical $T$-transform therefore satisfies the infinitesimal relation
+\begin{equation}
+\label{eq:ch6-emp-s-deriv}
+\frac{d}{d\tau}\ip{\ns{f}_z}{\rho_\tau^{(M)}} \approx \frac{1}{M^2}\sum_{i \neq j} \ns{f}_z'(\mu_i)\,\frac{\mu_i \mu_j}{\mu_i - \mu_j}.
+\end{equation}
+Now symmetrize in $(i, j)$:
+\begin{equation}
+\label{eq:ch6-symmetrize-dyson}
+\sum_{i \neq j} \ns{f}_z'(\mu_i)\,\frac{\mu_i \mu_j}{\mu_i - \mu_j}
+= \frac{1}{2}\sum_{i \neq j} \mu_i \mu_j\,\frac{\ns{f}_z'(\mu_i) - \ns{f}_z'(\mu_j)}{\mu_i - \mu_j}.
+\end{equation}
+Because the diagonal limit $x^2 f_z''(x)$ of the bounded continuous kernel $(x, y) \mapsto xy \frac{f_z'(x) - f_z'(y)}{x - y}$ contributes at most $\mathcal{O}(M^{-1}) \approx 0$ to $\frac{1}{2M^2}\sum_{i=1}^M$, taking the standard part replaces $\frac{1}{M^2}\sum_{i \neq j}$ by Loeb product integration against the shadow $\rho_\tau \otimes \rho_\tau$, giving
+\begin{equation}
+\label{eq:ch6-double-integral-burgers}
+\partial_\tau G_\tau(z) = \frac{1}{2}\iint xy\,\frac{f_z'(x) - f_z'(y)}{x - y}\,\rho_\tau(dx)\,\rho_\tau(dy).
+\end{equation}
+A direct algebraic calculation gives the symmetric identity
+\begin{equation}
+\label{eq:ch6-fz-algebraic}
+xy\,\frac{f_z'(x) - f_z'(y)}{x - y} = -z\bigl(f_z(x)\,\partial_z f_z(y) + f_z(y)\,\partial_z f_z(x)\bigr).
+\end{equation}
+The two terms agree after integration against $\rho_\tau \otimes \rho_\tau$, so the factor $1/2$ gives precisely $\partial_\tau G_\tau(z) = -z\,G_\tau(z)\,\partial_z G_\tau(z)$.
+
+We next derive the fixed-point equation by characteristics. The idea is to follow a curve along which the two terms in the PDE cancel. Starting from $z_0$, let $z(\tau)$ solve $\partial_\tau z(\tau) = z(\tau)\,G(\tau, z(\tau))$ with $z(0) = z_0$. Then
+\begin{equation}
+\label{eq:ch6-char-const}
+\frac{d}{d\tau} G\bigl(\tau, z(\tau)\bigr) = \partial_\tau G + \partial_\tau z\,\partial_z G = \partial_\tau G + z G\,\partial_z G = 0,
+\end{equation}
+so the transform is constant along the curve: $G(\tau, z(\tau)) = G_0(z_0)$. The characteristic equation therefore reduces to the linear ODE $\partial_\tau z(\tau) = G_0(z_0)\,z(\tau)$, whose solution is $z(\tau) = z_0 \exp(\tau G_0(z_0))$. Now fix the terminal time $\tau$ and write $z = z(\tau)$. Since $G_\tau(z) = G_0(z_0)$, the last relation becomes $z = z_0 \exp(\tau G_\tau(z))$, or $z_0 = z\,e^{-\tau G_\tau(z)}$. Substituting this starting point into $G_\tau(z) = G_0(z_0)$ gives the general characteristic identity
+\begin{equation}
+\label{eq:ch6-char-general}
+G_\tau(z) = G_0\bigl(z\,e^{-\tau G_\tau(z)}\bigr).
+\end{equation}
+For $\rho_0 = \delta_1$, we have $G_0(z) = (z - 1)^{-1}$, and \eqref{eq:ch6-char-general} becomes \eqref{eq:ch6-fixed-point}. This complex-characteristic calculation is formal.
+\end{proofsketch}
+
+\subsection{A Small-\texorpdfstring{$\tau$}{tau} Approximation in Closed Form}
+\label{subsec:small-tau}
+
+Making the first-order replacement $e^{-\tau G_\tau(z)} \approx 1 - \tau G_\tau(z)$ for small (or positive infinitesimal) $\tau > 0$ in \eqref{eq:ch6-fixed-point} leads to the quadratic approximation \cite[Section 4.2]{li2026geometric}
+\begin{equation}
+\label{eq:ch6-small-tau-quad}
+z\tau\,G_\tau(z)^2 - (z - 1) G_\tau(z) + 1 = 0.
+\end{equation}
+For $\tau > 0$, the physical root is selected by $G_\tau(z) \sim z^{-1}$ as $z \to \infty$; equivalently, the square root is chosen to behave like $z$ at infinity. This gives
+\begin{equation}
+\label{eq:ch6-small-tau-root}
+G_\tau(z) \approx \frac{(z - 1) - \sqrt{(z - 1)^2 - 4 z \tau}}{2 z \tau}.
+\end{equation}
+Let $\lambda_\pm := (\sqrt{1 + \tau} \pm \sqrt{\tau})^2$. Since $(z - 1)^2 - 4 z \tau = (z - \lambda_-)(z - \lambda_+)$, substituting the selected root into \eqref{eq:ch6-T-inv} gives, for $x > 0$,
+\begin{equation}
+\label{eq:ch6-small-tau-density}
+\begin{aligned}
+\rho_\tau(x) &\approx -\frac{1}{\pi x}\lim_{\varepsilon \downarrow 0} \Im G_\tau(x + i\varepsilon) \\
+&\approx -\frac{1}{\pi x}\left(-\frac{\sqrt{(x - \lambda_-)(\lambda_+ - x)}}{2 x \tau}\right)\ind{x \in [\lambda_-, \lambda_+]} \\
+&= \frac{\sqrt{(x - \lambda_-)(\lambda_+ - x)}}{2\pi x^2 \tau}\,\ind{x \in [\lambda_-, \lambda_+]}.
+\end{aligned}
+\end{equation}
+Within this approximation, the displayed density has total mass one. More precisely, it is the $x^{-1}$-reweighting of the Marchenko--Pastur law with variance parameter $1 + \tau$ and aspect ratio $\tau / (1 + \tau)$.
+
+\section{One Step of Feature Learning in the Proportional Limit}
+\label{sec:one-step-feature-learning}
+
+The preceding two sections study covariance dynamics at initialization. We now turn to training and ask how a single gradient step changes features in the proportional galaxy $D, N \in \hNinf$ with $\st(D/N) = \bar{\tau} \in (0, \infty)$ and $\Delta\tau = 1/N \approx 0$. A one-sample deep linear network is the simplest setting in which simultaneous updates across proportionally many hyperfinite layers interact nontrivially. The broader multi-sample nonlinear theory is the subject of ongoing work \cite{li2026feature}. Since that manuscript is still in preparation, the internal hyperfinite identities below are derived directly by Transfer, while the continuum shadow equations serve as a formal guide. Even in this scalar setting, the proportional regime produces nontrivial stochastic dynamics in depth.
+
+We begin with a fixed standard input--output pair $(x, y)$, with nonzero $x \in \R^{n_0}$ and $y \in \R$. We write $h_0 = x$ for the input representation and use the same input boundary as in \eqref{eq:deep_linear_net}:
+\begin{equation}
+\label{eq:ch6-fl-forward}
+h_0 := x, \qquad
+h_1 := \frac{1}{\sqrt{n_0}} W_0 x, \qquad
+h_{\ell+1} := \frac{1}{\sqrt{N}} W_\ell h_\ell, \quad 1 \le \ell \le D - 1.
+\end{equation}
+The scalar readout is
+\begin{equation}
+\label{eq:ch6-fl-readout}
+f := \frac{1}{\sqrt{N}} W_D h_D.
+\end{equation}
+Here $W_0 \in \hR^{N \times n_0}$, $W_\ell \in \hR^{N \times N}$ for $1 \le \ell \le D - 1$, and $W_D \in \hR^{1 \times N}$ have mutually independent internal $\hNcal(0, 1)$ entries at initialization. To focus on the bulk depth mechanism, we hold $W_0$ and $W_D$ fixed and train only $W_1, \dots, W_{D-1}$.
+
+For the backward pass, define the scaled internal output sensitivity
+\begin{equation}
+\label{eq:ch6-fl-g-def}
+g_\ell := \sqrt{N}\,\frac{\partial f}{\partial h_\ell} \in \hR^N, \qquad 1 \le \ell \le D.
+\end{equation}
+Then $g_D = W_D^\top$, and the transferred chain rule gives
+\begin{equation}
+\label{eq:ch6-fl-g-rec}
+g_\ell = \frac{1}{\sqrt{N}} W_\ell^\top g_{\ell+1}, \qquad \ell = D - 1, \dots, 1.
+\end{equation}
+
+\subsection{Scalar Kernels and Depth-Time SDEs at Initialization}
+\label{subsec:scalar-kernels-init}
+
+All Gram objects reduce to internal scalars in $\hR$. Define
+\begin{equation}
+\label{eq:ch6-scalar-grams}
+\Phi_0 := \frac{1}{n_0}\norm{x}^2, \qquad
+\Phi_\ell := \frac{1}{N}\norm{h_\ell}^2, \qquad
+G_\ell := \frac{1}{N}\norm{g_\ell}^2, \qquad
+Q_\ell := \frac{1}{\sqrt{N}}\ip{h_\ell}{g_\ell}.
+\end{equation}
+The last three quantities are defined for $1 \le \ell \le D$.
+
+Set the hyperfinite depth-time grid $\tau_\ell = \ell / N = \ell\,\Delta\tau$ with $\st(D/N) = \bar{\tau} \in (0, \infty)$. We use $\mathcal{F}^h$ for the internal forward filtration, $\mathcal{F}^g$ for the reverse filtration, and $\mathcal{F}^{\Delta h}$ below for the feature change. In the one-sample linear setting, the forward kernel has a geometric Brownian motion shadow.
+
+\begin{remark}[Recall: Geometric Brownian Motion for the Forward Kernel $\Phi$]
+\label{rem:forward-gbm-recall}
+In the deep linear case, let $\mathcal{F}_\ell^h := \sigma(h_0, \dots, h_\ell)$ be the internal forward filtration. For $0 \le \ell \le D - 1$, conditioning on $\mathcal{F}_\ell^h$ gives
+\begin{equation}
+\label{eq:ch6-forward-chisq}
+\Phi_{\ell+1} \mid \mathcal{F}_\ell^h \eqd \Phi_\ell\,\frac{\chi_N^2}{N},
+\end{equation}
+where $\chi_N^2 \sim \ns{\chi}^2(N)$ is internally independent of $\mathcal{F}_\ell^h$. As recalled in \eqref{eq:scalar_gbm},
+when $D, N \in \hNinf$ satisfy $\st(D/N) = \bar{\tau}$, the hyperfinite trajectory $\Phi_\tau^{(N)} := \Phi_{\lfloor \tau N \rfloor}$ is S-continuous $\Loeb$-a.s., and its standard shadow $\Phi_\tau := \st\bigl(\Phi_{\lfloor \tau N \rfloor}\bigr)$ solves the SDE
+\begin{equation}
+\label{eq:ch6-forward-gbm}
+d\Phi_\tau = \sqrt{2}\,\Phi_\tau\,dB_\tau^\Phi, \qquad
+\Phi_0 = \frac{1}{n_0}\norm{x}^2.
+\end{equation}
+\end{remark}
+
+The linear forward and backward recursions also imply that $Q_\ell$ is exactly invariant across hyperfinite depth. Indeed, using $h_{\ell+1} = \frac{1}{\sqrt{N}} W_\ell h_\ell$ and $g_\ell = \frac{1}{\sqrt{N}} W_\ell^\top g_{\ell+1}$,
+\begin{equation}
+\label{eq:ch6-Q-const}
+Q_{\ell+1} = \frac{1}{\sqrt{N}}\ip{h_{\ell+1}}{g_{\ell+1}}
+= \frac{1}{N}\ip{W_\ell h_\ell}{g_{\ell+1}}
+= \frac{1}{N}\ip{h_\ell}{W_\ell^\top g_{\ell+1}}
+= \frac{1}{\sqrt{N}}\ip{h_\ell}{g_\ell}
+= Q_\ell.
+\end{equation}
+Thus $Q_\ell \equiv Q$ for all $1 \le \ell \le D$. At the readout boundary $\ell = D$ this common value is the network output itself, while the backward kernel has the terminal behavior
+\begin{equation}
+\label{eq:ch6-terminal-QG}
+Q = Q_D = f = \sqrt{\Phi_D}\,Z_D, \qquad
+G_D = \frac{1}{N}\norm{W_D}^2 \approxP 1,
+\end{equation}
+where $Z_D := \ip{h_D}{W_D^\top}/\norm{h_D} \sim \hNcal(0, 1)$ is internally independent of the forward trajectory $\mathcal{F}_D^h$, and $G_D \approx 1$ $\Loeb$-a.s.\ by the Loeb strong law of large numbers. Writing $Z := \st(Z_D) \sim \mathcal{N}(0, 1)$, the shadow constant $\st(Q) = \sqrt{\Phi_{\bar{\tau}}}\,Z$ remains coupled to the terminal forward kernel $\Phi_{\bar{\tau}}$, even though $\st(G_D) = 1$.
+
+To analyze the backward kernel $G$, complete the forward pass and then expose the backward variables from the readout toward the input. Define the internal reverse filtration
+\begin{equation}
+\label{eq:ch6-rev-filtration}
+\mathcal{F}_\ell^g := \sigma\bigl(\mathcal{F}_D^h, \{g_k\}_{k=\ell}^D\bigr), \qquad 1 \le \ell \le D.
+\end{equation}
+Thus $\mathcal{F}_{\ell+1}^g \subset \mathcal{F}_\ell^g$. The nontrivial transition is therefore $g_\ell \mid \mathcal{F}_{\ell+1}^g$ for $1 \le \ell \le D - 1$.
+
+Conditional on $\mathcal{F}_D^h$, the layerwise internal Gaussian residual blocks are mutually independent. The variables $g_{\ell+1}, \dots, g_D$ use only higher-layer residual blocks, so adjoining them to $\mathcal{F}_D^h$ to form $\mathcal{F}_{\ell+1}^g$ reveals $W_\ell$ only through the forward constraint $W_\ell h_\ell = \sqrt{N}\,h_{\ell+1}$. Writing $P_{h_\ell}^\perp := I_N - h_\ell h_\ell^\top / \norm{h_\ell}^2$, the transferred one-sided Gaussian conditioning identity in Lemma~\ref{lem:ch2-gauss-cond}
+leaves the $P_{h_\ell}^\perp$ block fresh. Multiplying its transpose by $g_{\ell+1}/\sqrt{N}$ gives the internal conditional law
+\begin{equation}
+\label{eq:ch6-g-cond-law}
+g_\ell = \frac{1}{\sqrt{N}} W_\ell^\top g_{\ell+1} \;\Big|\; \mathcal{F}_{\ell+1}^g
+\eqd \frac{Q_{\ell+1}}{\Phi_\ell}\,\frac{h_\ell}{\sqrt{N}} + \sqrt{G_{\ell+1}}\,P_{h_\ell}^\perp \xi_\ell.
+\end{equation}
+Here $\xi_\ell \sim \hNcal(0, I_N)$ is internally independent of $\mathcal{F}_{\ell+1}^g$.
+
+The two terms in this representation are orthogonal in $\hR^N$, while $P_{h_\ell}^\perp$ has internal rank $N - 1$. Thus, writing $\chi_{N-1}^2 := \norm{P_{h_\ell}^\perp \xi_\ell}^2$, we have $\chi_{N-1}^2 \sim \ns{\chi}^2(N - 1)$ with an internal conditional law independent of $\mathcal{F}_{\ell+1}^g$, and we obtain the exact one-step hyperfinite formula
+\begin{equation}
+\label{eq:ch6-G-exact-step}
+G_\ell = \frac{1}{N}\norm{g_\ell}^2 = G_{\ell+1}\,\frac{\chi_{N-1}^2}{N} + \frac{Q_{\ell+1}^2}{N \Phi_\ell}.
+\end{equation}
+From $\hE[\chi_{N-1}^2] = N - 1$ and $\hVar(\chi_{N-1}^2) = 2(N - 1)$ we read off the internal conditional drift and conditional variance with reverse step $\Delta s := \Delta\tau = 1/N \approx 0$:
+\begin{align}
+\hE\bigl[G_\ell \mid \mathcal{F}_{\ell+1}^g\bigr] &= G_{\ell+1} + \Delta s\left(\frac{Q_{\ell+1}^2}{\Phi_\ell} - G_{\ell+1}\right), \label{eq:ch6-G-cond-mean} \\
+\hVar\bigl(G_\ell \mid \mathcal{F}_{\ell+1}^g\bigr) &= 2\,\Delta s\,(1 - \Delta s)\,G_{\ell+1}^2. \label{eq:ch6-G-cond-var}
+\end{align}
+For this reverse recursion on the reverse grid $s_\ell := (D - \ell)/N$, let $\tilde{o}_{\ell+1}^g(\Delta s)$ denote the scalar analogue of the conditional remainder in \eqref{eq:cond_o_tilde},
+with conditioning on $\mathcal{F}_{\ell+1}^g$ and interpreted locally after stopping $G$ on limited sets. Define the standardized internal chi-square innovation $\xi_{\ell,N}^G := (\chi_{N-1}^2 - (N - 1))/\sqrt{2(N - 1)}$ and write the one-step recursion in Keisler--Euler form as
+\begin{equation}
+\label{eq:ch6-G-euler}
+\begin{aligned}
+G_\ell - G_{\ell+1}
+&= \left(\frac{Q^2}{\Phi_\ell} - G_{\ell+1}\right)\Delta s + \sqrt{2\,\Delta s}\sqrt{1 - \Delta s}\,G_{\ell+1}\,\xi_{\ell,N}^G \\
+&= \left(\frac{Q^2}{\Phi_\ell} - G_{\ell+1}\right)\Delta s + \sqrt{2}\,G_{\ell+1}\,\Delta B_\ell^G + \tilde{o}_{\ell+1}^g(\Delta s),
+\end{aligned}
+\end{equation}
+where $\Delta B_\ell^G := \sqrt{\Delta s}\,\xi_{\ell,N}^G$. Conditional on $\mathcal{F}_{\ell+1}^g$, the innovation $\xi_{\ell,N}^G$ has internal mean zero and variance one, its law does not depend on the filtration, and $\st(\xi_{\ell,N}^G) \sim \mathcal{N}(0, 1)$ by the hyperfinite central limit theorem. The remainder in the last line is precisely $\sqrt{2\Delta s}\,(\sqrt{1 - \Delta s} - 1) G_{\ell+1} \xi_{\ell,N}^G$; on stopped sets where $G_{\ell+1} \in \Lim$, it has conditional mean zero and conditional second moment $\mathcal{O}(\Delta s^3)$, and hence has conditional order $\tilde{o}_{\ell+1}^g(\Delta s)$.
+
+Finally, \eqref{eq:ch6-G-euler} has the form of a hyperfinite Keisler--It\^o step when the layers are traversed along the reverse grid $s_\ell = (D - \ell)/N$ from the readout toward the input. At the standard shadow level, set $s = \bar{\tau} - \tau$ and $\widehat{G}_s := G_{\bar{\tau}-s}$, so that $s = 0$ corresponds to the readout. In this reverse clock, the infinitesimal increment suggests an ordinary forward It\^o equation in $s$ without requiring a backward stochastic-integral convention.
+
+\begin{proposition}[Formal Limit for $(Q, G)$ at Initialization (One Sample, Linear)]
+\label{prop:formal-qg-limit}
+Assume $D, N \in \hNinf$ satisfy $\st(D/N) = \bar{\tau} \in (0, \infty)$. Then $Q_\ell \equiv Q$ is constant across hyperfinite depth, with shadow $\st(Q) = \sqrt{\Phi_{\bar{\tau}}}\,Z$. Conditional on the realized forward shadow path $(\Phi_\tau)_{0 \le \tau \le \bar{\tau}}$ and the terminal variable $Z = \st(Z_D)$ from \eqref{eq:ch6-terminal-QG}, the reverse Keisler--Euler expansion \eqref{eq:ch6-G-euler} suggests the formal reverse-depth shadow SDE
+\begin{equation}
+\label{eq:ch6-G-sde}
+d\widehat{G}_s = \left(\frac{\st(Q)^2}{\Phi_{\bar{\tau}-s}} - \widehat{G}_s\right)ds + \sqrt{2}\,\widehat{G}_s\,dB_s^G, \qquad
+\widehat{G}_0 = 1,
+\end{equation}
+where we identify $Q$ with its standard part $\st(Q)$ in the continuum system. The Brownian motion $B^G$ is independent of the forward path and $Z$. The exact hyperfinite content is \eqref{eq:ch6-terminal-QG}, \eqref{eq:ch6-G-exact-step}, and \eqref{eq:ch6-G-euler}; the stochastic differential equation is its formal shadow summary.
+\end{proposition}
+
+\subsection{One Training Step: Overlap Processes \texorpdfstring{$R^h$, $R^g$, and $\dot{\Phi}$}{Rh, Rg, and dot-Phi}}
+\label{subsec:one-training-step}
+
+We now take one simultaneous gradient-descent step, with all gradients evaluated at the initialized network, while keeping the proportional depth--width galaxy $\st(D/N) = \bar{\tau}$. Let $L(f, y)$ be a standard continuously differentiable loss and write the internal scalar loss derivative
+\begin{equation}
+\label{eq:ch6-loss-residual}
+r := \partial_f \ns{L}(f, y).
+\end{equation}
+(For the mean-squared error $L(f, y) = \frac{1}{2}(f - y)^2$ this is the usual residual $r = f - y$.) We use the infinitesimal learning-rate scaling $\eta = \eta_0 / D \approx (\eta_0 / \bar{\tau})\,\Delta\tau$ for fixed standard $\eta_0 > 0$.
+
+For $\ell = 1, \dots, D - 1$ the internal gradient of the scalar output $f$ with respect to $W_\ell$ is
+\begin{equation}
+\label{eq:ch6-grad-W}
+\nabla_{W_\ell} f = \frac{1}{N} g_{\ell+1} h_\ell^\top,
+\end{equation}
+so the simultaneous hidden-layer update is
+\begin{equation}
+\label{eq:ch6-W-plus}
+W_\ell^+ := W_\ell - \eta\,r\,\nabla_{W_\ell} f = W_\ell - \frac{\eta\,r}{N} g_{\ell+1} h_\ell^\top \qquad \text{(linear, one sample)}.
+\end{equation}
+Let $h_\ell^+$ denote the resulting internal forward features and let $\Delta h_\ell$ denote their change:
+\begin{equation}
+\label{eq:ch6-h-plus}
+h_1^+ = h_1, \qquad
+h_{\ell+1}^+ = \frac{1}{\sqrt{N}} W_\ell^+ h_\ell^+, \qquad
+\Delta h_\ell := h_\ell^+ - h_\ell.
+\end{equation}
+To track this feature change across hyperfinite depth, define the internal scalar overlaps
+\begin{equation}
+\label{eq:ch6-overlaps-def}
+R_\ell^h := \frac{1}{N}\ip{\Delta h_\ell}{h_\ell}, \qquad
+R_\ell^g := \frac{1}{\sqrt{N}}\ip{\Delta h_\ell}{g_\ell}, \qquad
+\dot{\Phi}_\ell := \frac{1}{N}\norm{\Delta h_\ell}^2.
+\end{equation}
+Thus $\dot{\Phi}_\ell$ is not a time derivative of $\Phi_\ell$; it is the normalized squared norm of the feature change. If $\Phi_\ell^+ := N^{-1}\norm{h_\ell^+}^2$, then the actual kernel change is exactly
+\begin{equation}
+\label{eq:ch6-kernel-change}
+\Phi_\ell^+ - \Phi_\ell = 2 R_\ell^h + \dot{\Phi}_\ell.
+\end{equation}
+
+Expanding the updated forward recursion gives the exact internal difference equation
+\begin{equation}
+\label{eq:ch6-delta-h-rec}
+\Delta h_{\ell+1} = \frac{1}{\sqrt{N}} W_\ell \Delta h_\ell - \eta\,r\bigl(\Phi_\ell + R_\ell^h\bigr)\frac{1}{\sqrt{N}} g_{\ell+1}, \qquad
+\Delta h_1 = 0.
+\end{equation}
+The extra $R_\ell^h$ comes from the nonlinear interaction between the weight change and the accumulated feature change within the same simultaneous step.
+
+The overlap $R^g$ satisfies an exact deterministic-given-kernels recursion. Pair \eqref{eq:ch6-delta-h-rec} with $g_{\ell+1}$ and use $g_\ell = \frac{1}{\sqrt{N}} W_\ell^\top g_{\ell+1}$:
+\begin{equation}
+\label{eq:ch6-Rg-step-expand}
+R_{\ell+1}^g = \frac{1}{\sqrt{N}}\ip{\Delta h_{\ell+1}}{g_{\ell+1}}
+= \frac{1}{\sqrt{N}}\ip{\Delta h_\ell}{g_\ell} - \eta\,r\bigl(\Phi_\ell + R_\ell^h\bigr)\frac{1}{N}\norm{g_{\ell+1}}^2.
+\end{equation}
+Since $G_{\ell+1} = \frac{1}{N}\norm{g_{\ell+1}}^2$, we obtain the exact layerwise increment
+\begin{equation}
+\label{eq:ch6-Rg-exact-inc}
+R_{\ell+1}^g - R_\ell^g = -\eta\,r\bigl(\Phi_\ell + R_\ell^h\bigr) G_{\ell+1}.
+\end{equation}
+Since $\eta = \eta_0 / D = \bigl(\eta_0 / \bar{\tau} + o(1)\bigr)\Delta\tau$, passing to standard depth-time $\tau = \st(\ell / N)$ formally yields the continuum shadow ODE
+\begin{equation}
+\label{eq:ch6-Rg-ode}
+dR_\tau^g = -\frac{\eta_0}{\bar{\tau}}\,r\bigl(\Phi_\tau + R_\tau^h\bigr) G_\tau\,d\tau, \qquad
+R_0^g = 0.
+\end{equation}
+Equivalently, integrating \eqref{eq:ch6-Rg-ode} gives the integral form
+\begin{equation}
+\label{eq:ch6-Rg-integral}
+R_\tau^g = -\frac{\eta_0}{\bar{\tau}}\,r \int_0^\tau \bigl(\Phi_s + R_s^h\bigr) G_s\,ds.
+\end{equation}
+
+The remaining overlaps $R^h$ and $\dot{\Phi}$ pick up $\mathcal{O}(\sqrt{\Delta\tau})$ fluctuations from the internal random matrix product. Their one-step conditional laws require conditioning on both the initialized forward and backward passes. The active matrix $W_\ell \in \hR^{N \times N}$ is then constrained simultaneously by $W_\ell h_\ell = \sqrt{N}\,h_{\ell+1}$ and $W_\ell^\top g_{\ell+1} = \sqrt{N}\,g_\ell$. For this analysis, use the increasing internal filtration
+\begin{equation}
+\label{eq:ch6-delta-h-filtration}
+\mathcal{F}_0^{\Delta h} := \mathcal{F}_1^g, \qquad
+\mathcal{F}_\ell^{\Delta h} := \sigma\bigl(\mathcal{F}_1^g, \{\Delta h_k\}_{1 \le k \le \ell}\bigr), \quad 1 \le \ell \le D.
+\end{equation}
+All initialized gradients and weight changes are measurable with respect to $\mathcal{F}_1^g$. Given this $\sigma$-field, layerwise internal conditional independence and the change recursion \eqref{eq:ch6-delta-h-rec} imply that each $\Delta h_k$ with $k \le \ell$ uses only residual blocks from matrices $W_j$ with $j < \ell$. Thus adjoining the earlier feature changes reveals no additional action of the active matrix $W_\ell$.
+
+The transferred two-sided projection decomposition in Lemma~\ref{lem:gaussian-cond-two-sided} shows that the internal conditional law of $\Delta h_{\ell+1}$ given $\mathcal{F}_\ell^{\Delta h}$ is a (possibly degenerate) internal Gaussian on $\hR^N$ with
+\begin{equation}
+\label{eq:ch6-delta-h-cond-moments}
+\begin{aligned}
+\hE\bigl[\Delta h_{\ell+1} \mid \mathcal{F}_\ell^{\Delta h}\bigr]
+&= \frac{R_\ell^h}{\Phi_\ell}\,h_{\ell+1} + \frac{1}{\sqrt{N}\,G_{\ell+1}}\left(R_{\ell+1}^g - \frac{Q}{\Phi_\ell} R_\ell^h\right) g_{\ell+1}, \\
+\hCov\bigl(\Delta h_{\ell+1} \mid \mathcal{F}_\ell^{\Delta h}\bigr)
+&= \left(\dot{\Phi}_\ell - \frac{(R_\ell^h)^2}{\Phi_\ell}\right) P_{g_{\ell+1}}^\perp, \qquad 1 \le \ell \le D - 1.
+\end{aligned}
+\end{equation}
+Here $P_{g_{\ell+1}}^\perp := I_N - g_{\ell+1} g_{\ell+1}^\top / \norm{g_{\ell+1}}^2$ is the internal orthogonal projector defined analogously to $P_{h_\ell}^\perp$ above. The exact recursion \eqref{eq:ch6-Rg-exact-inc} makes $R_{\ell+1}^g$ measurable with respect to $\mathcal{F}_\ell^{\Delta h}$, so its appearance in the conditional mean is not circular.
+
+The whole forward trajectory belongs to $\mathcal{F}_\ell^{\Delta h}$, so the forward increment $\Phi_{\ell+1} - \Phi_\ell$ is fixed under this conditioning. Taking internal scalar moments of \eqref{eq:ch6-delta-h-cond-moments} gives the exact conditional mean increments (with $\Delta\tau = 1/N$)
+\begin{equation}
+\label{eq:ch6-overlap-exact-drifts}
+\begin{aligned}
+\hE\bigl[R_{\ell+1}^h - R_\ell^h \mid \mathcal{F}_\ell^{\Delta h}\bigr]
+&= \frac{R_\ell^h}{\Phi_\ell}(\Phi_{\ell+1} - \Phi_\ell) + \frac{Q\,\Delta\tau}{G_{\ell+1}}\left(R_{\ell+1}^g - \frac{Q}{\Phi_\ell} R_\ell^h\right), \\
+\hE\bigl[\dot{\Phi}_{\ell+1} - \dot{\Phi}_\ell \mid \mathcal{F}_\ell^{\Delta h}\bigr]
+&= \frac{(R_\ell^h)^2}{\Phi_\ell^2}(\Phi_{\ell+1} - \Phi_\ell)
+   + \Delta\tau\left(\frac{(R_{\ell+1}^g)^2}{G_{\ell+1}} - \frac{Q^2 (R_\ell^h)^2}{G_{\ell+1}\Phi_\ell^2} - \dot{\Phi}_\ell + \frac{(R_\ell^h)^2}{\Phi_\ell}\right).
+\end{aligned}
+\end{equation}
+The corresponding exact internal conditional covariances are
+\begin{equation}
+\label{eq:ch6-overlap-exact-covs}
+\begin{aligned}
+N\,\hVar\bigl(R_{\ell+1}^h \mid \mathcal{F}_\ell^{\Delta h}\bigr)
+&= \left(\dot{\Phi}_\ell - \frac{(R_\ell^h)^2}{\Phi_\ell}\right)\left(\Phi_{\ell+1} - \frac{Q^2}{N G_{\ell+1}}\right), \\
+N\,\hCov\bigl(R_{\ell+1}^h, \dot{\Phi}_{\ell+1} \mid \mathcal{F}_\ell^{\Delta h}\bigr)
+&= \frac{2 R_\ell^h}{\Phi_\ell}\left(\dot{\Phi}_\ell - \frac{(R_\ell^h)^2}{\Phi_\ell}\right)\left(\Phi_{\ell+1} - \frac{Q^2}{N G_{\ell+1}}\right), \\
+N\,\hVar\bigl(\dot{\Phi}_{\ell+1} \mid \mathcal{F}_\ell^{\Delta h}\bigr)
+&= 2(1 - \Delta\tau)\left(\dot{\Phi}_\ell - \frac{(R_\ell^h)^2}{\Phi_\ell}\right)^2 \\
+&\quad + \frac{4(R_\ell^h)^2}{\Phi_\ell^2}\left(\dot{\Phi}_\ell - \frac{(R_\ell^h)^2}{\Phi_\ell}\right)\left(\Phi_{\ell+1} - \frac{Q^2}{N G_{\ell+1}}\right).
+\end{aligned}
+\end{equation}
+Here $\Phi_{\ell+1} - Q^2/(N G_{\ell+1}) = N^{-1}\norm{P_{g_{\ell+1}}^\perp h_{\ell+1}}^2 \ge 0$. The part of the conditional mean parallel to $g_{\ell+1}$ contributes to the drifts but not to these covariances, because the fresh internal Gaussian block lies in $g_{\ell+1}^\perp$.
+
+On limited state sets where $\Phi_\ell, G_{\ell+1} \in \App_{>0}$, substituting \eqref{eq:ch6-Rg-exact-inc} into \eqref{eq:ch6-overlap-exact-drifts} shows that replacing $R_{\ell+1}^g$ by $R_\ell^g$ changes both conditional mean increments by $\mathcal{O}(\Delta\tau^2)$; in the second identity, the pure square of the $\mathcal{O}(\Delta\tau)$ overlap difference contributes only $\mathcal{O}(\Delta\tau^3)$. We absorb these terms into $\tilde{o}_\ell^{\Delta h}(\Delta\tau)$, used componentwise in the sense of the conditional remainder in \eqref{eq:cond_o_tilde},
+with conditioning on $\mathcal{F}_\ell^{\Delta h}$ and locally where $\Phi_\ell$ and $G_{\ell+1}$ remain appreciable. Since S-continuity of the forward path gives $\Phi_{\ell+1} - \Phi_\ell \approx 0$, while the alignment and finite-rank corrections $Q^2/(N G_{\ell+1})$ and $\Delta\tau$ in \eqref{eq:ch6-overlap-exact-covs} are $\mathcal{O}(\Delta\tau) \approx 0$ locally, the exact identities reduce to the leading internal conditional covariance at Keisler--Euler scale:
+\begin{equation}
+\label{eq:ch6-overlap-leading-cov}
+N\,\hCov\!\left(\begin{pmatrix} R_{\ell+1}^h \\ \dot{\Phi}_{\ell+1} \end{pmatrix} \;\middle|\; \mathcal{F}_\ell^{\Delta h}\right)
+=
+\begin{pmatrix}
+  \Phi_\ell \dot{\Phi}_\ell - (R_\ell^h)^2 &
+  2 R_\ell^h \left(\dot{\Phi}_\ell - \dfrac{(R_\ell^h)^2}{\Phi_\ell}\right) \\[0.7em]
+  2 R_\ell^h \left(\dot{\Phi}_\ell - \dfrac{(R_\ell^h)^2}{\Phi_\ell}\right) &
+  2\left(\dot{\Phi}_\ell^2 - \dfrac{(R_\ell^h)^4}{\Phi_\ell^2}\right)
+\end{pmatrix}
++ o(1),
+\end{equation}
+where $o(1) \approx 0$ on limited appreciable state sets. By transferred Cauchy--Schwarz, $(R_\ell^h)^2 \le \Phi_\ell \dot{\Phi}_\ell$, so the radicands below are nonnegative.
+
+Combining the exact conditional means in \eqref{eq:ch6-overlap-exact-drifts} with a Cholesky factorization of the leading covariance in \eqref{eq:ch6-overlap-leading-cov} gives the hyperfinite Keisler--Euler expansions
+\begin{align}
+R_{\ell+1}^h - R_\ell^h
+&= \frac{R_\ell^h}{\Phi_\ell}(\Phi_{\ell+1} - \Phi_\ell)
+   + \sqrt{\Delta\tau}\,\sqrt{\Phi_\ell \dot{\Phi}_\ell - (R_\ell^h)^2}\,\xi_\ell^h
+   + \frac{Q\,\Delta\tau}{G_{\ell+1}}\left(R_\ell^g - \frac{Q}{\Phi_\ell} R_\ell^h\right)
+   + \tilde{o}_\ell^{\Delta h}(\Delta\tau), \label{eq:ch6-Rh-euler} \\
+\dot{\Phi}_{\ell+1} - \dot{\Phi}_\ell
+&= \frac{(R_\ell^h)^2}{\Phi_\ell^2}(\Phi_{\ell+1} - \Phi_\ell)
+   + \frac{2 R_\ell^h}{\Phi_\ell}\sqrt{\Delta\tau}\,\sqrt{\Phi_\ell \dot{\Phi}_\ell - (R_\ell^h)^2}\,\xi_\ell^h
+   + \sqrt{2\,\Delta\tau}\left(\dot{\Phi}_\ell - \frac{(R_\ell^h)^2}{\Phi_\ell}\right)\xi_\ell^{\dot{\Phi}} \notag \\
+&\quad + \Delta\tau\left(\frac{(R_\ell^g)^2}{G_{\ell+1}} - \frac{Q^2}{G_{\ell+1}}\frac{(R_\ell^h)^2}{\Phi_\ell^2} - \dot{\Phi}_\ell + \frac{(R_\ell^h)^2}{\Phi_\ell}\right)
+   + \tilde{o}_\ell^{\Delta h}(\Delta\tau). \label{eq:ch6-dotPhi-euler}
+\end{align}
+In \eqref{eq:ch6-Rh-euler} and \eqref{eq:ch6-dotPhi-euler}, $\xi_\ell^h$ is the internal Gaussian fluctuation shared by both increments, whereas $\xi_\ell^{\dot{\Phi}}$ records the remaining chi-square fluctuation in the squared feature change and appears only in the second. Once the quantities in $\mathcal{F}_\ell^{\Delta h}$ are held fixed, these two internal random variables are uncorrelated (and independent in the standard shadow): $\xi_\ell^h \sim \hNcal(0, 1)$, while $\st(\xi_\ell^{\dot{\Phi}}) \sim \mathcal{N}(0, 1)$. The exact $\dot{\Phi}$ increment also contains a smaller term proportional to $((\xi_\ell^h)^2 - 1)\,\Delta\tau$; its conditional second moment is $\mathcal{O}(\Delta\tau^2)$, so it is absorbed into $\tilde{o}_\ell^{\Delta h}(\Delta\tau)$. Thus \eqref{eq:ch6-overlap-exact-drifts} and \eqref{eq:ch6-overlap-exact-covs} are exact internal hyperfinite identities, whereas \eqref{eq:ch6-Rh-euler} and \eqref{eq:ch6-dotPhi-euler} are local infinitesimal conditional expansions.
+
+At a formal continuum shadow level (identifying all variables with their standard parts), the Keisler--Euler expansions suggest the following coupled equations:
+\begin{align}
+dR_\tau^h &= \sqrt{2}\,R_\tau^h\,dB_\tau^\Phi
+             + \sqrt{\Phi_\tau \dot{\Phi}_\tau - (R_\tau^h)^2}\,dB_\tau^h
+             + \left(\frac{Q}{G_\tau} R_\tau^g - \frac{Q^2}{\Phi_\tau G_\tau} R_\tau^h\right)d\tau, \label{eq:ch6-Rh-sde} \\
+d\dot{\Phi}_\tau &= \sqrt{2}\,\frac{(R_\tau^h)^2}{\Phi_\tau}\,dB_\tau^\Phi
+                    + \frac{2 R_\tau^h}{\Phi_\tau}\sqrt{\Phi_\tau \dot{\Phi}_\tau - (R_\tau^h)^2}\,dB_\tau^h
+                    + \sqrt{2}\left(\dot{\Phi}_\tau - \frac{(R_\tau^h)^2}{\Phi_\tau}\right)dB_\tau^{\dot{\Phi}} \notag \\
+                 &\quad + \left(\frac{(R_\tau^g)^2}{G_\tau} - \frac{Q^2}{G_\tau}\frac{(R_\tau^h)^2}{\Phi_\tau^2} - \dot{\Phi}_\tau + \frac{(R_\tau^h)^2}{\Phi_\tau}\right)d\tau. \label{eq:ch6-dotPhi-sde}
+\end{align}
+In this formal covariance factorization, $B^h$ and $B^{\dot{\Phi}}$ may be taken independent of each other and of the forward driver $B^\Phi$ in \eqref{eq:ch6-forward-gbm}. In particular, this factorization gives $d\ip{R^h}{\dot{\Phi}}_\tau = 2 R_\tau^h \dot{\Phi}_\tau\,d\tau$. Together with \eqref{eq:ch6-Rg-ode} and the formal backward equation \eqref{eq:ch6-G-sde}, these relations motivate the consolidated shadow summary below.
+
+\begin{theorem}[Scalar Proportional-Limit Kernel Dynamics (Formal)]
+\label{thm:scalar-prop-feature-learning}
+In the proportional galaxy $D, N \in \hNinf$ with $\st(D/N) = \bar{\tau} \in (0, \infty)$, the preceding hyperfinite calculations formally suggest the following six-equation continuum shadow system for the standard parts $(\Phi_\tau, Q, G_\tau, R_\tau^g, R_\tau^h, \dot{\Phi}_\tau)$. For the backward kernel, write $s = \bar{\tau} - \tau$ and $\widehat{G}_s = G_{\bar{\tau}-s}$:
+\begin{align}
+d\Phi_\tau &= \sqrt{2}\,\Phi_\tau\,dB_\tau^\Phi, & \Phi_0 &= \frac{1}{n_0}\norm{x}^2, && \text{[forward in $\tau$]}, \label{eq:ch6-sys-Phi} \\
+Q_\tau &= Q \quad\text{(constant in depth)}, & Q &= \sqrt{\Phi_{\bar{\tau}}}\,Z, && \text{[terminal coupling]}, \label{eq:ch6-sys-Q} \\
+d\widehat{G}_s &= \left(\frac{Q^2}{\Phi_{\bar{\tau}-s}} - \widehat{G}_s\right)ds + \sqrt{2}\,\widehat{G}_s\,dB_s^G, & \widehat{G}_0 &= 1, && \text{[reverse depth $s$]}, \label{eq:ch6-sys-G} \\
+dR_\tau^g &= -\frac{\eta_0}{\bar{\tau}}\,r\bigl(\Phi_\tau + R_\tau^h\bigr) G_\tau\,d\tau, & R_0^g &= 0, && \text{[forward in $\tau$]}. \label{eq:ch6-sys-Rg}
+\end{align}
+The two feature-change overlaps also use the forward clock $\tau$:
+\begin{align}
+dR_\tau^h &= \sqrt{2}\,R_\tau^h\,dB_\tau^\Phi
+             + \sqrt{\Phi_\tau \dot{\Phi}_\tau - (R_\tau^h)^2}\,dB_\tau^h
+             + \left(\frac{Q}{G_\tau} R_\tau^g - \frac{Q^2}{\Phi_\tau G_\tau} R_\tau^h\right)d\tau, \qquad R_0^h = 0, \label{eq:ch6-sys-Rh} \\
+d\dot{\Phi}_\tau &= \sqrt{2}\,\frac{(R_\tau^h)^2}{\Phi_\tau}\,dB_\tau^\Phi
+                    + \frac{2 R_\tau^h}{\Phi_\tau}\sqrt{\Phi_\tau \dot{\Phi}_\tau - (R_\tau^h)^2}\,dB_\tau^h
+                    + \sqrt{2}\left(\dot{\Phi}_\tau - \frac{(R_\tau^h)^2}{\Phi_\tau}\right)dB_\tau^{\dot{\Phi}} \notag \\
+                 &\quad + \left(\frac{(R_\tau^g)^2}{G_\tau} - \frac{Q^2(R_\tau^h)^2}{G_\tau \Phi_\tau^2} - \dot{\Phi}_\tau + \frac{(R_\tau^h)^2}{\Phi_\tau}\right)d\tau, \qquad \dot{\Phi}_0 = 0. \label{eq:ch6-sys-dotPhi}
+\end{align}
+Here $Z \sim \mathcal{N}(0, 1)$ is independent of the forward path, and $r = \partial_f L(Q, y)$ denotes the shadow loss derivative. The Brownian motions $B^h$ and $B^{\dot{\Phi}}$ may be taken independent of each other and of $B^\Phi$. The backward driver $B^G$ is independent of the forward path and $Z$; no independence from $B^h$ or $B^{\dot{\Phi}}$ is asserted.
+\end{theorem}
+
+To read off the exact effect of the training step on the prediction, let $f^+ := \frac{1}{\sqrt{N}} W_D h_D^+$. The readout is fixed and $g_D = W_D^\top$, so telescoping \eqref{eq:ch6-Rg-exact-inc} across hyperfinite layers from $R_1^g = 0$ gives
+\begin{equation}
+\label{eq:ch6-pred-change}
+f^+ - f = \frac{1}{\sqrt{N}}\ip{\Delta h_D}{g_D} = R_D^g
+= -\eta\,r \sum_{\ell=1}^{D-1} \bigl(\Phi_\ell + R_\ell^h\bigr) G_{\ell+1}.
+\end{equation}
+Thus the terminal overlap $R_D^g$ gives the exact prediction change (and $\st(f^+ - f) = R_{\bar{\tau}}^g$ in the continuum shadow), while \eqref{eq:ch6-kernel-change} recovers the feature-kernel change from $R_\ell^h$ and $\dot{\Phi}_\ell$.
+
+The factor $\Phi_\ell + R_\ell^h = N^{-1}\ip{h_\ell}{h_\ell^+}$ is the internal overlap between the original and updated features. Replacing it by $\Phi_\ell$ gives the linearized prediction update $-\eta\,r \sum_{\ell=1}^{D-1} \Phi_\ell G_{\ell+1}$. Indeed, $\norm{\nabla_{W_\ell} f}_F^2 = \Phi_\ell G_{\ell+1}$, so summing these squared gradient norms gives the initialized scalar NTK restricted to the trained hidden matrices; compare Proposition~\ref{prop:ch2-layerwise-ntk}.
+The remaining $R_\ell^h G_{\ell+1}$ contribution records interactions among the simultaneous layer updates across proportional hyperfinite depth: an earlier feature change is passed through later matrices that have also been updated. All gradients are still evaluated at initialization. The network is linear in its input, but not jointly linear in all its weights.
+
+Extensions to multiple inputs and nonlinear activations remain part of the ongoing work \cite{li2026feature}.

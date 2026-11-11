@@ -1,0 +1,304 @@
+\chapter{Technical Complements}
+\label{app:technical}
+
+\section{Formal Derivation of the Transport PDE}
+\label{sec:appa-transport}
+
+Here is the nonstandard weak-form derivation of \eqref{eq:1.11} from the hyperfinite mean-field system in \eqref{eq:1.8}, with the velocity field $b$ defined in \eqref{eq:1.10}.
+
+At an unlimited particle count $N \in \hNinf$, let $\rho_t^{(N)} = \frac{1}{N}\sum_{i=1}^N \delta_{X_i(t)}$ be the internal hyperfinite empirical measure from \eqref{eq:1.9},
+let $\rho_t := L(\rho_t^{(N)}) \circ \st^{-1}$ denote its Loeb pushforward shadow on $\R$ \cite{loeb1975conversion,cutland2000loeb}, and let $q : \R \to \R$ be a standard smooth compactly supported test function. Then the internal pairing is
+\begin{equation}
+\label{eq:appa-emp-pairing}
+\int_{\hR} \ns{q}(x)\,\rho_t^{(N)}(dx) = \frac{1}{N}\sum_{i=1}^N \ns{q}\bigl(X_i(t)\bigr).
+\end{equation}
+Differentiate internally in time by Transfer of the chain rule and substitute \eqref{eq:1.8}:
+\begin{equation}
+\label{eq:appa-internal-chain}
+\begin{aligned}
+\frac{d}{dt}\int_{\hR} \ns{q}(x)\,\rho_t^{(N)}(dx)
+&= \frac{1}{N}\sum_{i=1}^N \ns{q}'\bigl(X_i(t)\bigr)\,\partial_t X_i(t) \\
+&= \int_{\hR} \ns{q}'(x)\,\ns{b}\bigl(x, \rho_t^{(N)}\bigr)\,\rho_t^{(N)}(dx).
+\end{aligned}
+\end{equation}
+Because $q'$ and the interaction kernel $K$ in \eqref{eq:1.10} are standard bounded Lipschitz functions, every particle velocity $\partial_t X_i(t)$ is uniformly bounded, so the right-hand side of \eqref{eq:appa-internal-chain} is bounded and S-continuous in $t$ on bounded time intervals. Equivalently, the internal pairing $t \mapsto \int_{\hR} \ns{q}(x)\,\rho_t^{(N)}(dx)$ is S-differentiable. Integrating \eqref{eq:appa-internal-chain} over $[0, t]$, passing to standard parts via Loeb integration of bounded S-continuous functions, and differentiating in standard time $t$ gives
+\begin{equation}
+\label{eq:appa-weak-transport}
+\frac{d}{dt}\int_\R q(x)\,\rho_t(dx) = \int_\R q'(x)\,b(x, \rho_t)\,\rho_t(dx).
+\end{equation}
+This is precisely the distributional formulation of \eqref{eq:1.11}; it does not require $\rho_t$ to have a density. The equation is a prototype of a McKean--Vlasov PDE because the velocity field depends on the shadow measure $\rho_t$ itself.
+
+\section{A Sufficient Condition for Stochastic Equicontinuity}
+\label{sec:appa-equicontinuity}
+
+This technical lemma supplies the S-continuity (equivalently, tightness) condition used in the function-space strengthening following Theorem~\ref{thm:ch2-nngp-fdd}.
+Let $f_N$ denote the internal width-$N$ network in \eqref{eq:ch2-1layer-net} at an unlimited width $N \in \hNinf$ (and $f_n$ its standard width-$n$ counterpart).
+
+\begin{lemma}[H\"older Activation Implies S-Continuity and Tightness]
+\label{lem:holder-tightness}
+Assume that for some standard $\gamma \in (0, 1]$ and $C_\phi > 0$,
+\begin{equation}
+\label{eq:appa-holder-act}
+\abs{\phi(u) - \phi(v)} \le C_\phi \abs{u - v}^\gamma \qquad \forall\,u, v \in \R.
+\end{equation}
+Fix a standard compact set $K \subset \R^{n_0}$. For every standard $p \ge 2$, there is a standard constant $C_{p,K} < \infty$ such that, for every $N \in \hN$ and all $x, x' \in \ns{K}$,
+\begin{equation}
+\label{eq:appa-kolmogorov-moment}
+\hE\bigl[\abs{f_N(x) - f_N(x')}^p\bigr] \le C_{p,K}\norm{x - x'}^{\gamma p}.
+\end{equation}
+In particular, choose standard $p \ge 2$ so that $\gamma p > n_0$ and set $\beta := \gamma p - n_0 > 0$, making the right-hand side of \eqref{eq:appa-kolmogorov-moment} equal to $C_{p,K}\norm{x - x'}^{n_0 + \beta}$. Then at any unlimited width $N \in \hNinf$, $\Loeb$-almost surely $f_N(x) \in \Lim$ for all $x \in \ns{K}$ and $f_N$ is S-continuous on $\ns{K}$:
+\[
+x \approx x' \text{ in } \ns{K} \implies f_N(x) \approx f_N(x') \qquad \Loeb\text{-a.s.}
+\]
+(equivalently, $\{f_n|_K\}_{n \ge 1}$ is tight in $C(K)$).
+\end{lemma}
+
+\begin{proof}
+Fix $N \in \hN$ and $x, x' \in \ns{K}$, and let $\mathcal{F} := \sigma(h_i(x), h_i(x') : i \in [N])$ be the internal hidden-layer $\sigma$-field. By Transfer of the conditional Gaussian output-layer identity \eqref{eq:ch2-cond-gauss},
+the increment $f_N(x) - f_N(x')$, conditional on $\mathcal{F}$, is centered internal Gaussian with variance $N^{-1}\sum_{i=1}^N \abs{\ns{\phi}(h_i(x)) - \ns{\phi}(h_i(x'))}^2$. Hence the transferred Gaussian moment formula, internal Jensen's inequality (for $p/2 \ge 1$), and Transfer of \eqref{eq:appa-holder-act}, with $C_p$ denoting the standard $p$th absolute moment of $\mathcal{N}(0, 1)$, give
+\begin{equation}
+\label{eq:appa-holder-proof}
+\begin{aligned}
+\hE\bigl[\abs{f_N(x) - f_N(x')}^p\bigr]
+&= C_p\,\hE\!\left[\left(\frac{1}{N}\sum_{i=1}^N \abs{\ns{\phi}(h_i(x)) - \ns{\phi}(h_i(x'))}^2\right)^{p/2}\right] \\
+&\le C_p\,\hE\!\left[\frac{1}{N}\sum_{i=1}^N \abs{\ns{\phi}(h_i(x)) - \ns{\phi}(h_i(x'))}^p\right] \\
+&\le C_p C_\phi^p\,\hE\!\left[\abs{\frac{\ip{w}{x - x'}}{\sqrt{n_0}}}^{\gamma p}\right]
+\le C_{p,K}\norm{x - x'}^{\gamma p}.
+\end{aligned}
+\end{equation}
+The same conditional Gaussian identity at one fixed standard $x_0 \in K$, together with $\abs{\ns{\phi}(u)} \le \abs{\phi(0)} + C_\phi\abs{u}^\gamma$, gives $\hE[\abs{f_N(x_0)}^p] \le C'_{p,K} < \infty$ for a standard constant $C'_{p,K}$. Choosing standard $p$ with $\gamma p > n_0$ and $\alpha \in (0, \min\{\gamma, \beta/p\})$, each internal sample path of $f_N$ is internally continuous because $\ns{\phi}$ is H\"older continuous, and Transfer of the Kolmogorov--Chentsov maximal moment bound on $K$ yields a standard constant $\widetilde{C}_{p,\alpha,K} < \infty$ such that
+\[
+\hE\!\left[\sup_{\substack{x, x' \in \ns{K} \\ x \neq x'}} \frac{\abs{f_N(x) - f_N(x')}^p}{\norm{x - x'}^{\alpha p}}\right] \le \widetilde{C}_{p,\alpha,K}.
+\]
+Consequently, at unlimited $N \in \hNinf$, both $\abs{f_N(x_0)}$ and the internal $\alpha$-H\"older constant $M_N := \sup_{x \neq x' \in \ns{K}} \abs{f_N(x) - f_N(x')}/\norm{x - x'}^\alpha$ belong to $\Lim$ $\Loeb$-almost surely \cite{loeb1975conversion,cutland2000loeb}. On this $\Loeb$-full-measure event, $x \approx x'$ in $\ns{K}$ implies $\abs{f_N(x) - f_N(x')} \le M_N\norm{x - x'}^\alpha \approx 0$, establishing $\Loeb$-a.s.\ S-continuity on $\ns{K}$ (and, by standard equivalence, tightness of $\{f_n|_K\}_{n \ge 1}$ in $C(K)$).
+\end{proof}
+
+\begin{remark}
+\label{rem:holder-shadow}
+On the $\Loeb$-full-measure event where $f_N$ is limited and S-continuous on $\ns{K}$, the standard shadow $f^\circ(\st(x)) := \st\bigl(f_N(x)\bigr)$ ($x \in \ns{K}$) defines a continuous random function in $C(K)$ satisfying $\sup_{x \in \ns{K}} \abs{f_N(x) - \ns{(f^\circ)}(x)} \approx 0$. Combined with the finite-dimensional Gaussian shadows in Theorem~\ref{thm:ch2-nngp-fdd},
+$f^\circ$ is a continuous version of the limiting Gaussian process on $K$ (equivalently, the laws of $f_n|_K$ converge weakly in $C(K)$ to that of $f^\circ$).
+\end{remark}
+
+\section{Convergence in the Skorohod Topology}
+\label{sec:appa-skorohod}
+
+Many processes in these notes arise by piecewise-constant interpolation of a layer-indexed Markov chain on a hyperfinite grid $\mathbb{T}_N := \{0, \Delta t, 2\Delta t, \dots, \lfloor NT \rfloor\Delta t\}$ with $\Delta t = 1/N \approx 0$ (e.g.\ $\Phi_\tau^{(N)} := \Phi_{\lfloor \tau N \rfloor}$). At finite $n$, such interpolations are c\`adl\`ag---right-continuous with left limits---and therefore live naturally in a Skorohod path space. This appendix records the classical Skorohod definitions needed to interpret statements like
+\begin{equation}
+\label{eq:appa-skorohod-conv}
+X^{(n)} \xrightarrow{d} X \qquad \text{in } D([0, T], S),
+\end{equation}
+where $S$ is a metric state space, and then states their nonstandard characterization via \emph{S-continuity}, following \cite[Appendix A]{li2022neural}, \cite{ethier2009markov,kallenberg2021foundations}, and the hyperfinite stochastic-process theory of Anderson, Keisler, and Lindstr\o m \cite{anderson1976nonstandard,keisler1984infinitesimal,lindstrom1988invitation}.
+
+Let $(S, d_S)$ be a complete separable metric space, and write $D([0, T], S)$ for the set of c\`adl\`ag functions $x : [0, T] \to S$. When $S = \R^k$, we use the Euclidean distance $d_S(x, y) = \norm{x - y}$. To compare two c\`adl\`ag paths up to small shifts of their jump times, let $\Lambda_T$ be the set of increasing homeomorphisms $\lambda : [0, T] \to [0, T]$ with $\lambda(0) = 0$ and $\lambda(T) = T$.
+
+\paragraph{Skorohod $J_1$ metric.}
+For $x, y \in D([0, T], S)$ define the (equivalent) $J_1$ metric
+\begin{equation}
+\label{eq:appa-j1-metric}
+d_{J_1}(x, y) := \inf_{\lambda \in \Lambda_T}\left\{
+  \sup_{t \in [0, T]} d_S\bigl(x(\lambda(t)), y(t)\bigr) \vee \sup_{t \in [0, T]} \abs{\lambda(t) - t}
+\right\}.
+\end{equation}
+Then $x_n \to x$ in the Skorohod $J_1$ topology if and only if there exist $\lambda_n \in \Lambda_T$ such that
+\begin{equation}
+\label{eq:appa-j1-criterion}
+\sup_{t \in [0, T]} \abs{\lambda_n(t) - t} \to 0
+\qquad \text{and} \qquad
+\sup_{t \in [0, T]} d_S\bigl(x_n(\lambda_n(t)), x(t)\bigr) \to 0,
+\end{equation}
+which is the same criterion stated as \cite[(A.1)]{li2022neural}.
+
+\paragraph{Nonstandard characterization via S-continuity.}
+The Skorohod space accommodates piecewise-constant approximations by allowing small shifts in jump times. However, when the limiting path $x \in C([0, T], S)$ is \emph{continuous}---as for every diffusion studied in these notes---convergence in the $J_1$ topology reduces to uniform convergence, and in Nonstandard Analysis the jump-time homeomorphisms $\lambda \in \Lambda_T$ disappear completely. Specifically, at an unlimited step scale $N \in \hNinf$, an internal path $X^{(N)} \in \ns{D}([0, T], S)$ satisfies $\ns{d}_{J_1}(X^{(N)}, \ns{x}) \approx 0$ for a standard continuous path $x \in C([0, T], S)$ if and only if $\sup_{t \in {}^*[0, T]} \ns{d}_S\bigl(X_t^{(N)}, \ns{x}(t)\bigr) \approx 0$, which holds if and only if $X^{(N)}$ is nearstandard-valued and \emph{S-continuous} on ${}^*[0, T]$:
+\[
+s \approx t \text{ in } {}^*[0, T] \implies \ns{d}_S\bigl(X_{\lfloor Ns \rfloor}^{(N)}, X_{\lfloor Nt \rfloor}^{(N)}\bigr) \approx 0,
+\]
+with $x(\st(t)) = \st\bigl(X_{\lfloor Nt \rfloor}^{(N)}\bigr)$ \cite{anderson1976nonstandard,keisler1984infinitesimal,lindstrom1988invitation}.
+
+Equipped with the $J_1$ topology, $D([0, T], S)$ is a Polish space (separable and completely metrizable), so whenever an internal piecewise-constant process $X_{\lfloor Nt \rfloor}^{(N)}$ is $\Loeb$-almost surely nearstandard and S-continuous on ${}^*[0, T]$, its pointwise standard part $X_t^\circ(\omega) := \st\bigl(X_{\lfloor Nt \rfloor}^{(N)}(\omega)\bigr)$ defines a $\Loeb$-measurable continuous random path in $C([0, T], S) \subset D([0, T], S)$ whose Loeb pushforward law is the $J_1$ weak limit of $X^{(n)}$.
+
+\begin{definition}[Local S-Continuous Shadow and Local Skorohod Convergence]
+\label{def:local-skorohod}
+Let $U \subseteq \R^k$ be standard open, and write $D \Subset U$ when $D$ is open and bounded and $\overline{D}$ is a compact subset of $U$. Let $X^{(N)}$ ($N \in \hNinf$) be an internal c\`adl\`ag $\ns{U}$-valued process (arising from a standard sequence $X^{(n)}$), and let $X$ be a continuous standard process defined up to its lifetime in $U$. For $D \Subset U$, define the standard exit time
+\begin{equation}
+\label{eq:appa-exit-time}
+\tau_D(Y) := \inf\{t \in [0, T] : Y_t \notin D\},
+\end{equation}
+and the corresponding internal exit time $\tau_{\ns{D}}(X^{(N)}) := \inf\{t \in {}^*[0, T] : X_t^{(N)} \notin \ns{D}\}$, with the convention $\inf \varnothing := T$. The stopped paths are frozen at their exit values and are therefore defined on all of $[0, T]$ (respectively ${}^*[0, T]$), even if $X$ later leaves $U$ or explodes. We say $X^{(N)}$ has \emph{local S-continuous shadow} $X$ in distribution (equivalently, $X^{(n)}$ converges \emph{locally} to $X$ in distribution) if, for every such $D \Subset U$ at which the stopping map is almost surely continuous under $X$, the stopped hyperfinite path $X_{\cdot \wedge \tau_{\ns{D}}(X^{(N)})}^{(N)}$ is $\Loeb$-a.s.\ S-continuous on ${}^*[0, T]$ and its standard shadow satisfies
+\begin{equation}
+\label{eq:appa-local-stopped-conv}
+\st\!\left(X_{\cdot \wedge \tau_{\ns{D}}(X^{(N)})}^{(N)}\right) \eqd X_{\cdot \wedge \tau_D(X)} \qquad \text{in } C([0, T], \R^k) \subset D([0, T], \R^k)
+\end{equation}
+(equivalently, $X_{\cdot \wedge \tau_D(X^{(n)})}^{(n)} \xrightarrow{d} X_{\cdot \wedge \tau_D(X)}$ in $D([0, T], \R^k)$). A standard sufficient condition for continuity of the stopping map is $\tau_D(X) = \tau_{\overline{D}}(X)$ almost surely.
+\end{definition}
+
+This formulation is useful when the limiting diffusion can leave compact sets or explode. The stopping times in Theorem~\ref{thm:neural_cov_sde}
+localize the process against norm growth. A compact localization inside $\SPD(m)$ must in addition stay an appreciable distance from the singular boundary.
+
+A standard generator route combines a Feller construction---see \cite[Chapter 8, Theorem 2.5]{ethier2009markov} under smoother coefficient assumptions---with the discrete-time criterion \cite[Theorem 17.28]{kallenberg2021foundations}; \cite[Appendix A]{li2022neural} develops this route for the Neural Covariance SDE. In Nonstandard Analysis, Keisler's hyperfinite martingale-lifting theory \cite{keisler1984infinitesimal,lindstrom1988invitation} (combined with the localized Stroock--Varadhan martingale characterization \cite{stroock1997multidimensional}) yields the following convenient infinitesimal moment criterion.
+
+\begin{theorem}[Hyperfinite Diffusion Approximation for Markov Chains]
+\label{thm:diffusion-approx}
+Let $U \subseteq \R^k$ be standard open, fix an unlimited step scale $N \in \hNinf$ with $\Delta t := 1/N \approx 0$, and let $(X_j^{(N)})_{j \ge 0}$ be an internal time-homogeneous Markov chain taking values in $\ns{U}$ (transferred from a standard sequence $(X_j^{(n)})_{j \ge 0}$). Define the hyperfinite piecewise-constant interpolation $X_t^{(N)} := X_{\lfloor Nt \rfloor}^{(N)}$. Assume $X_0^{(N)}$ is nearstandard in $\ns{U}$ $\Loeb$-a.s.\ with $\st(X_0^{(N)}) \eqd X_0$, where $X_0$ takes values in $U$. Assume there exist standard functions $b : U \to \R^k$ and $\Sigma : U \to \R^{k \times k}$ such that for every standard compact $K \subset U$ and every $x \in \ns{K}$,
+\begin{align}
+N\,\hE\bigl[X_1^{(N)} - X_0^{(N)} \mid X_0^{(N)} = x\bigr] &\approx \ns{b}(x), \label{eq:appa-drift-hyp} \\
+N\,\hCov\bigl(X_1^{(N)} - X_0^{(N)} \mid X_0^{(N)} = x\bigr) &\approx \ns{\Sigma}(x), \label{eq:appa-cov-hyp} \\
+N\,\hE\bigl[\norm{X_1^{(N)} - X_0^{(N)}}^3 \mid X_0^{(N)} = x\bigr] &\approx 0. \label{eq:appa-third-moment-hyp}
+\end{align}
+Here the internal conditional moments refer to the one-step transition kernel started from $x$ (by Robinson's compactness characterization \cite{robinson1966nonstandard}, \eqref{eq:appa-drift-hyp}--\eqref{eq:appa-third-moment-hyp} are equivalent to uniform convergence of the rescaled moments on every standard compact $K \subset U$). Let $\sigma : U \to \R^{k \times k}$ satisfy $\sigma(x)\sigma(x)^\top = \Sigma(x)$, and assume that $b$ and $\sigma$ are locally Lipschitz on $U$. Let $X$ be the maximal solution, started from $X_0$, of
+\begin{equation}
+\label{eq:appa-limiting-sde}
+dX_t = b(X_t)\,dt + \sigma(X_t)\,dB_t.
+\end{equation}
+Then, for each standard $T > 0$, $X^{(N)}$ has local S-continuous shadow $X$ in the sense of Definition~\ref{def:local-skorohod}: for every admissible localization domain $D \Subset U$, the stopped hyperfinite chain $X_{\cdot \wedge \tau_{\ns{D}}(X^{(N)})}^{(N)}$ is $\Loeb$-a.s.\ S-continuous on ${}^*[0, T]$ and its Loeb shadow solves \eqref{eq:appa-limiting-sde} up to $\tau_D(X)$.
+\end{theorem}
+
+\begin{proof}
+Fix an admissible localization domain $D \Subset U$ from Definition~\ref{def:local-skorohod} and choose a standard compact $K \subset U$ with $\overline{D} \subset K$. Let $P_N$ be the internal transition kernel of $X^{(N)}$, and let $\Delta_N(x)$ have the internal one-step increment law started from $x \in \ns{K}$. Decompose each pre-exit step into its predictable drift and martingale increment: $X_{j+1}^{(N)} - X_j^{(N)} = \mu_N(X_j^{(N)}) + M_{j+1}^{(N)}$, where $\mu_N(x) := \hE[\Delta_N(x)]$.
+
+By \eqref{eq:appa-drift-hyp}, $\mu_N(x) = \Delta t\,\bigl(\ns{b}(x) + \eta_N(x)\bigr)$ with $\sup_{x \in \ns{K}} \norm{\eta_N(x)} \approx 0$, so the stopped cumulative drift sum has bounded difference quotients on $\mathbb{T}_N$ and is deterministically S-continuous. For the stopped martingale sum, \eqref{eq:appa-cov-hyp} bounds the predictable quadratic variation increment by $\mathcal{O}(\Delta t)$ on $\ns{K}$, while \eqref{eq:appa-third-moment-hyp} and internal Markov's inequality give $N\,\hP(\norm{\Delta_N(x)} > \varepsilon) \le \varepsilon^{-3} N\,\hE[\norm{\Delta_N(x)}^3] \approx 0$ uniformly on $\ns{K}$ for every standard $\varepsilon > 0$. By Lindstr\o m's and Keisler's S-continuity theorem for hyperfinite martingales with bounded quadratic variation and infinitesimal rare-jump rate \cite[Section III.3]{lindstrom1988invitation}, \cite{keisler1984infinitesimal}, the stopped martingale sum---and hence $X_{\cdot \wedge \tau_{\ns{D}}(X^{(N)})}^{(N)}$---is $\Loeb$-almost surely S-continuous on ${}^*[0, T]$.
+
+To identify the shadow law, note that if $\mu_N(x) = \hE[\Delta_N(x)]$, then the raw internal second moment is $N\,\hCov(\Delta_N(x)) + N\,\mu_N(x)\mu_N(x)^\top$. Because $N\,\mu_N(x)$ is bounded on $\ns{K}$, the second term is $\mathcal{O}(N^{-1}) \approx 0$, so $N\,\hE[\Delta_N(x)\Delta_N(x)^\top] \approx \ns{\Sigma}(x)$ uniformly on $\ns{K}$; the third-moment bound \eqref{eq:appa-third-moment-hyp} likewise shows that truncating jumps at any standard $\varepsilon > 0$ alters the first two rescaled moments only infinitesimally (compare \cite[Lemma 11.2.1]{stroock1997multidimensional} and \cite[Appendix A, Proposition A.6]{li2022neural}). Expanding $\ns{f}(y) - \ns{f}(x)$ to second order for any standard $f \in C_c^\infty(U)$ therefore gives, uniformly for $x \in \ns{K}$,
+\begin{equation}
+\label{eq:appa-generator-conv}
+\begin{aligned}
+\mathcal{A}_N \ns{f}(x) &:= N \int_{\ns{U}} \bigl(\ns{f}(y) - \ns{f}(x)\bigr)\,P_N(x, dy) \\
+&\approx \ns{b}(x)^\top \nabla\ns{f}(x) + \frac{1}{2}\Tr\bigl(\ns{\Sigma}(x) D^2\ns{f}(x)\bigr) =: \ns{(\mathcal{A}f)}(x).
+\end{aligned}
+\end{equation}
+Taking standard parts of the stopped internal Dynkin martingale $M_t^f := \ns{f}(X_{\lfloor Nt \rfloor}^{(N)}) - \ns{f}(X_0^{(N)}) - \Delta t \sum_{j=0}^{\lfloor Nt \rfloor - 1} \mathcal{A}_N\ns{f}(X_j^{(N)})$ on $[0, T]$ shows that the continuous Loeb shadow $X^\circ_t = \st\bigl(X_{t \wedge \tau_{\ns{D}}}^{(N)}\bigr)$ solves the stopped martingale problem for $\mathcal{A}$ started from $\st(X_0^{(N)}) \eqd X_0$ \cite{keisler1984infinitesimal,lindstrom1988invitation} (equivalently, by \cite[Theorem 11.2.3]{stroock1997multidimensional}). Local Lipschitz continuity of $b$ and $\sigma$ gives uniqueness of the solution to \eqref{eq:appa-limiting-sde} up to exit from $D$, and the boundary continuity condition on $D$ ensures $\st\bigl(\tau_{\ns{D}}(X^{(N)})\bigr) = \tau_D(X^\circ)$ $\Loeb$-a.s., yielding \eqref{eq:appa-local-stopped-conv} for every admissible $D \Subset U$.
+\end{proof}
+
+\section{Affine-Invariant Metric for the Covariance SDE}
+\label{sec:appa-metric}
+
+\begin{proof}[Proof of Proposition~\ref{prop:affine-metric}]
+Congruence invariance follows from $(P\Phi P^\top)^{-1} = P^{-\top}\Phi^{-1}P^{-1}$ and cyclicity of the trace. It remains to identify the metric in the coordinates of \eqref{eq:ch6-linear-cov-sde}. For $A \in \Sym(m)$, let $F_A(\Phi) := \Tr(A\Phi)$, so that $dF_A(\Phi)[V] = \Tr(AV)$. On the hyperfinite grid $\tau_\ell = \ell\,\Delta\tau$ with $\Delta\Phi_\ell = \Phi_\ell^{1/2}\,\Delta S_\ell\,\Phi_\ell^{1/2}$ realizing \eqref{eq:ch6-sym-bm-sde}, the normalization $\hCov(\Delta S_{\ell,\alpha\beta}, \Delta S_{\ell,\gamma\delta} \mid \mathcal{F}_\ell) = (\delta_{\alpha\gamma}\delta_{\beta\delta} + \delta_{\alpha\delta}\delta_{\beta\gamma})\,\Delta\tau$ gives $\hE[\Tr(A\,\Delta\Phi_\ell)\Tr(B\,\Delta\Phi_\ell) \mid \mathcal{F}_\ell] = 2\Tr(A\Phi_\ell B\Phi_\ell)\,\Delta\tau$, whose standard shadow quadratic variation is
+\begin{equation}
+\label{eq:appa-FA-FB-qv}
+d\ip{F_A(\Phi_\tau)}{F_B(\Phi_\tau)} = 2\Tr(A\Phi_\tau B\Phi_\tau)\,d\tau.
+\end{equation}
+The metric-dual tangent vector of $dF_A(\Phi)$ is $2\Phi A\Phi$, since
+\begin{equation}
+\label{eq:appa-metric-dual}
+g_\Phi(2\Phi A\Phi, V) = \Tr(AV).
+\end{equation}
+Writing $g_\Phi^{-1}$ for the cometric, we therefore have
+\begin{equation}
+\label{eq:appa-cometric-FA-FB}
+g_\Phi^{-1}(dF_A, dF_B) = g_\Phi(2\Phi A\Phi, 2\Phi B\Phi) = 2\Tr(A\Phi B\Phi),
+\end{equation}
+so the covariance tensor of the SDE is the cometric associated with $g_\Phi$.
+
+We now pass explicitly to the distinct upper-triangular coordinates. For $\alpha \le \beta$, let $x^{\alpha\beta}(\Phi) := \Phi_{\alpha\beta}$ and $C_{\alpha\beta} := (E_{\alpha\beta} + E_{\beta\alpha})/2$, where $E_{\alpha\beta}$ is the standard matrix unit. Then $dx^{\alpha\beta}(V) = V_{\alpha\beta} = \Tr(C_{\alpha\beta} V)$, and hence
+\begin{equation}
+\label{eq:appa-cometric-coords}
+\begin{aligned}
+g_\Phi^{-1}(dx^{\alpha\beta}, dx^{\gamma\delta})
+&= 2\Tr(C_{\alpha\beta}\Phi C_{\gamma\delta}\Phi) \\
+&= \Phi_{\alpha\gamma}\Phi_{\beta\delta} + \Phi_{\alpha\delta}\Phi_{\beta\gamma} = \Sigma_{\alpha\beta,\gamma\delta}(\Phi).
+\end{aligned}
+\end{equation}
+Thus $\Sigma(\Phi)$ is exactly the matrix of the cometric in the coordinate coframe $(dx^{\alpha\beta})_{\alpha \le \beta}$. The metric matrix in the dual coordinate tangent basis is therefore $\Sigma(\Phi)^{-1}$.
+\end{proof}
+
+\section{Gaussian Conditioning}
+\label{sec:appa-gaussian-cond}
+
+This section collects two internal Gaussian conditioning identities valid at arbitrary hyperfinite dimensions $N, p, q, m \in \hN$ by the Transfer Principle \cite{robinson1966nonstandard,goldblatt1998lectures}. The first is a one-sided conditioning identity used when we condition only on the forward information $W\phi$ (see Lemma~\ref{lem:ch2-gauss-cond}).
+The second is a two-sided projection decomposition used when we condition simultaneously on forward and backward information $(W\phi, W^\top g)$ (see Lemma~\ref{lem:gaussian-cond-two-sided}). Formally, the two-sided statement reduces to the one-sided one when the backward information is absent (e.g.\ by setting $g = 0$ in Lemma~\ref{lem:gaussian-cond-two-sided}, which makes $P_g = 0$).
+
+\subsection{One-Sided Gaussian Conditioning}
+\label{subsec:appa-one-sided}
+
+This subsection provides a proof of Lemma~\ref{lem:ch2-gauss-cond}
+for internal matrices $W \in \hR^{N \times p}$ with i.i.d.\ $\hNcal(0, 1)$ entries and internally deterministic $\phi \in \hR^{p \times q}$ at arbitrary hyperfinite dimensions $N, p, q \in \hN$.
+
+\begin{proof}[Proof of Lemma~\ref{lem:ch2-gauss-cond}]
+By the Transfer Principle, every first-order finite-dimensional linear-algebraic and Gaussian conditioning statement over $\R$ holds verbatim for internal hyperfinite-dimensional matrices over $\hR$. Write the $N$ rows of $W \in \hR^{N \times p}$ as $w_1, \dots, w_N \in \hR^{1 \times p}$. Since the rows are internally independent and identically distributed, it suffices to prove the statement for a single internal row $w \sim \hNcal(0, I_p)$.
+
+Let $\phi \in \hR^{p \times q}$ be internally deterministic and define the internal orthogonal projector $P_\phi = \phi(\phi^\top \phi)^\dagger \phi^\top$ onto $\col(\phi) \subseteq \hR^p$ via the transferred Moore--Penrose pseudoinverse $(\cdot)^\dagger$, with $P_\phi^\perp = I_p - P_\phi$. Decompose
+\begin{equation}
+\label{eq:appa-one-sided-decomp}
+w = w P_\phi + w P_\phi^\perp.
+\end{equation}
+The internal random vector $w P_\phi = (w\phi)(\phi^\top \phi)^\dagger \phi^\top$ is internally measurable with respect to $w\phi$ because $P_\phi$ depends on $\phi$ only and $w P_\phi$ is the unique minimum-norm internal linear function of $w\phi$ matching the constraint in least squares. Moreover, $w P_\phi^\perp$ is a centered internal Gaussian with covariance $P_\phi^\perp$, and it is internally independent of $w\phi$ because
+\begin{equation}
+\label{eq:appa-one-sided-cov}
+\hCov\bigl(w P_\phi^\perp, w\phi\bigr) = P_\phi^\perp \phi = 0,
+\end{equation}
+so transferred joint Gaussianity implies internal independence.
+
+Let $\widetilde{w} \sim \hNcal(0, I_p)$ be an internally independent copy of $w$. Then $\widetilde{w} P_\phi^\perp \sim \hNcal(0, P_\phi^\perp)$ and is internally independent of $w\phi$. Therefore, in internal conditional distribution,
+\begin{equation}
+\label{eq:appa-one-sided-row}
+w \mid \sigma(w\phi) \eqd w P_\phi + \widetilde{w} P_\phi^\perp.
+\end{equation}
+Stacking the $N$ hyperfinite rows back together yields $W \mid \sigma(W\phi) \eqd W P_\phi + \widetilde{W} P_\phi^\perp$ with $\widetilde{W}$ an internally independent copy of $W$, as claimed.
+\end{proof}
+
+\subsection{Two-Sided Gaussian Conditioning}
+\label{subsec:appa-two-sided}
+
+\begin{lemma}[Gaussian Conditioning (Two-Sided Projection Decomposition)]
+\label{lem:gaussian-cond-two-sided}
+For internal dimensions $N, m \in \hN$, let $W \in \hR^{N \times N}$ have internally i.i.d.\ $\hNcal(0, 1)$ entries and let $\phi, g \in \hR^{N \times m}$ be internally deterministic. Define the internal orthogonal projections onto the column spans
+\begin{equation}
+\label{eq:appa-two-sided-proj}
+P_\phi = \phi(\phi^\top \phi)^\dagger \phi^\top, \qquad
+P_g = g(g^\top g)^\dagger g^\top,
+\end{equation}
+where $(\cdot)^\dagger$ is the transferred Moore--Penrose pseudoinverse. Then in internal conditional distribution,
+\begin{equation}
+\label{eq:appa-two-sided-law}
+W \mid (W\phi, W^\top g) \eqd P_g W + W P_\phi - P_g W P_\phi + P_g^\perp \widetilde{W} P_\phi^\perp,
+\end{equation}
+where $P^\perp = I_N - P$ and $\widetilde{W} \in \hR^{N \times N}$ is an internally independent copy of $W$.
+\end{lemma}
+
+This subsection proves Lemma~\ref{lem:gaussian-cond-two-sided}. The statement is a convenient hyperfinite matrix form of linear-Gaussian regression obtained by Transfer: conditioning an internal Gaussian matrix $W$ on the internal linear observations $W\phi$ and $W^\top g$ amounts to removing the components of $W$ that are ``seen'' along the internal spans of $\phi$ and $g$, and leaving an internally independent Gaussian on the orthogonal complement.
+
+\begin{proof}[Proof of Lemma~\ref{lem:gaussian-cond-two-sided}]
+By the Transfer Principle, write the internal Frobenius inner product on $\hR^{N \times N}$ as $\ip{A}{B}_F := \Tr(A^\top B)$. Let $\mathcal{U} := \col(\phi) \subseteq \hR^N$ and $\mathcal{V} := \col(g) \subseteq \hR^N$ and denote the corresponding internal orthogonal projections by $P_\phi$ and $P_g$.
+
+Decompose $W$ into four internal blocks with respect to the orthogonal splittings $\hR^N = \mathcal{V} \oplus \mathcal{V}^\perp$ (rows) and $\hR^N = \mathcal{U} \oplus \mathcal{U}^\perp$ (columns):
+\begin{equation}
+\label{eq:appa-four-blocks}
+W = \underbrace{P_g W P_\phi}_{\text{seen by both}}
+    + \underbrace{P_g W P_\phi^\perp}_{\text{seen by } W^\top g}
+    + \underbrace{P_g^\perp W P_\phi}_{\text{seen by } W\phi}
+    + \underbrace{P_g^\perp W P_\phi^\perp}_{\text{unseen}}.
+\end{equation}
+The key internal observations are:
+\begin{itemize}
+  \item $W\phi$ depends only on the columns of $W$ in $\mathcal{U}$, i.e.\ on $W P_\phi$ (equivalently the sum of the first and third blocks);
+  \item $W^\top g$ depends only on the rows of $W$ in $\mathcal{V}$, i.e.\ on $P_g W$ (equivalently the sum of the first and second blocks);
+  \item the ``unseen'' block $P_g^\perp W P_\phi^\perp$ is internally independent of $(W P_\phi, P_g W)$ because $W$ has internally i.i.d.\ Gaussian entries and these are Frobenius-orthogonal internal linear functionals of $\operatorname{vec}(W)$.
+\end{itemize}
+More formally, $\operatorname{vec}(W) \sim \hNcal(0, I_{N^2})$ and the internal maps
+\begin{equation}
+\label{eq:appa-linear-maps}
+L_1 : W \mapsto W P_\phi, \qquad
+L_2 : W \mapsto P_g W, \qquad
+L_3 : W \mapsto P_g^\perp W P_\phi^\perp
+\end{equation}
+are internally linear. One checks that $L_3$ is orthogonal (as an internal linear map on $\hR^{N \times N}$ with the internal Frobenius inner product) to both $L_1$ and $L_2$: for any internal matrices $A, B \in \hR^{N \times N}$,
+\begin{equation}
+\label{eq:appa-frob-orthog}
+\ip{P_g^\perp A P_\phi^\perp}{B P_\phi}_F = \Tr\bigl((P_g^\perp A P_\phi^\perp)^\top B P_\phi\bigr) = 0, \qquad
+\ip{P_g^\perp A P_\phi^\perp}{P_g B}_F = 0,
+\end{equation}
+since $P_\phi^\perp P_\phi = 0$ and $P_g P_g^\perp = 0$. By Transfer of Gaussian orthogonality-implies-independence, $L_3(W)$ is internally independent of $(L_1(W), L_2(W))$, and its internal conditional law given $(W\phi, W^\top g)$ is unchanged.
+
+It remains to identify the conditional mean. Given $W\phi$ and $W^\top g$, the blocks $P_g^\perp W P_\phi$ and $P_g W P_\phi^\perp$ are fixed by the constraints, and the intersection block $P_g W P_\phi$ is fixed twice but consistently. A short algebraic rearrangement gives
+\begin{equation}
+\label{eq:appa-inclusion-exclusion}
+P_g W + W P_\phi - P_g W P_\phi = P_g W P_\phi + P_g W P_\phi^\perp + P_g^\perp W P_\phi,
+\end{equation}
+which is exactly the sum of the internal blocks determined by $(W^\top g, W\phi)$. Thus the internal conditional law is ``deterministic part $+$ independent unseen Gaussian block'', i.e.\
+\begin{equation}
+\label{eq:appa-two-sided-final}
+W \mid (W\phi, W^\top g) \eqd \bigl(P_g W + W P_\phi - P_g W P_\phi\bigr) + P_g^\perp \widetilde{W} P_\phi^\perp,
+\end{equation}
+where $\widetilde{W}$ is an internally independent copy of $W$.
+\end{proof}
