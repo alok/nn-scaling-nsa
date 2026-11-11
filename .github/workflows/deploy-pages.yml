@@ -1,0 +1,53 @@
+name: Deploy to GitHub Pages
+
+on:
+    push:
+        branches: [main, nsa]
+    workflow_dispatch:
+
+permissions:
+    contents: read
+    pages: write
+    id-token: write
+
+concurrency:
+    group: pages
+    cancel-in-progress: false
+
+jobs:
+    build:
+        runs-on: ubuntu-latest
+        steps:
+            - uses: actions/checkout@v6
+
+            - uses: leanprover/lean-action@v1
+              with:
+                  build: false
+                  test: false
+
+            - name: Build literate site and bundle PDFs
+              id: build
+              run: |
+                  path=$(lake query :literateHtml)
+                  mkdir -p "$path/pdf"
+                  if compgen -G "pdf/*.pdf" > /dev/null; then
+                      cp pdf/*.pdf "$path/pdf/"
+                  fi
+                  echo "path=$path" >> "$GITHUB_OUTPUT"
+
+            - name: Upload Pages artifact
+              uses: actions/upload-pages-artifact@v3
+              with:
+                  path: ${{ steps.build.outputs.path }}
+
+    deploy:
+        if: github.ref == 'refs/heads/main' || github.event_name == 'workflow_dispatch'
+        needs: build
+        runs-on: ubuntu-latest
+        environment:
+            name: github-pages
+            url: ${{ steps.deployment.outputs.page_url }}
+        steps:
+            - name: Deploy to GitHub Pages
+              id: deployment
+              uses: actions/deploy-pages@v4
