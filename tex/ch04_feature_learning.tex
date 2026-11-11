@@ -174,11 +174,11 @@ b(\theta, \rho_t) := -\frac{\eta_0}{m}\sum_{\alpha=1}^m \bigl(f_{\rho_t}(x^\alph
 n_0^{-1/2} a\,\phi'\bigl(n_0^{-1/2}\ip{w}{x^\alpha}\bigr)\,x^\alpha
 \end{bmatrix}.
 \end{equation}
-The \emph{mean-field PDE} is the continuity equation
+The \emph{mean-field PDE} is the Dirac scalar-divergence continuity equation in $\Cl_{1+n_0}$~\cite{hestenes1984clifford,brackx1982clifford},
 \begin{equation}\label{eq:4.23}
-\partial_t \rho_t = -\nabla_{(a, w)} \cdot \bigl(b(\,\cdot\,, \rho_t)\rho_t\bigr),
+\partial_t \rho_t = -\scalar{\dirac_\theta\bigl(b(\,\cdot\,, \rho_t)\rho_t\bigr)} = -\nabla_{(a, w)} \cdot \bigl(b(\,\cdot\,, \rho_t)\rho_t\bigr),
 \end{equation}
-interpreted in the weak sense.
+where $\dirac_\theta := e_a \partial_a + \sum_{k=1}^{n_0} e_k \partial_{w_k}$ is the parameter-space Dirac operator satisfying $\dirac_\theta^2 = \Delta_{(a,w)}$, interpreted in the weak sense.
 \end{definition}
 
 To derive the weak formulation directly from the hyperfinite system, let $q : \Theta \to \R$ be a smooth compactly supported standard test function, with natural extension $\ns{q} : \ns{\Theta} \to \hR$. By Transfer of the chain rule, for the internal empirical measure $\rho_t^{(N)} = \frac{1}{N}\sum_{i=1}^N \delta_{\theta_i(t)}$,
@@ -199,7 +199,7 @@ The same transport equation also has a Wasserstein gradient-flow interpretation.
 \begin{equation}\label{eq:4.27}
 F(\rho) := \frac{1}{2m}\sum_{\alpha=1}^m \bigl(f_\rho(x^\alpha) - y^\alpha\bigr)^2.
 \end{equation}
-The mean-field dynamics can be viewed as the $W_2$-gradient flow of $F$ in the space of probability measures, in the sense of Otto's calculus: the continuity equation \eqref{eq:4.23} has the form $\partial_t \rho_t + \nabla \cdot (\rho_t v_t) = 0$ with velocity field $v_t(\theta) = -\eta_0 \nabla_\theta\bigl(\delta F / \delta \rho\bigr)(\theta)$. This is the same structure that underlies the Jordan--Kinderlehrer--Otto scheme \cite{jordan1998variational} and the general theory of metric-space gradient flows \cite{ambrosio2005gradient}.
+The mean-field dynamics can be viewed as the $W_2$-gradient flow of $F$ in the space of probability measures, in the sense of Otto's calculus: the continuity equation \eqref{eq:4.23} has the Dirac divergence form $\partial_t \rho_t + \scalar{\dirac_\theta(\rho_t v_t)} = 0$ with Dirac gradient velocity field $v_t(\theta) = -\eta_0 \dirac_\theta\bigl(\delta F / \delta \rho\bigr)(\theta)$. Because $\dirac_\theta \wedge \dirac_\theta = 0$ on smooth scalars, $v_t$ satisfies the exact monogenic curl-freeness identity $\bivec{\dirac_\theta v_t} = \dirac_\theta \wedge v_t = 0$, so its full geometric Dirac derivative is purely scalar: $\dirac_\theta v_t = \scalar{\dirac_\theta v_t} = -\eta_0 \Delta_\theta(\delta F / \delta\rho)$. This is the same structure that underlies the Jordan--Kinderlehrer--Otto scheme \cite{jordan1998variational} and the general theory of metric-space gradient flows \cite{ambrosio2005gradient}.
 
 The standard mean-field picture for two-layer networks emerged from several essentially concurrent papers between 2017 and 2020. Under an overall $1/N$ output scaling, these works viewed the network as an interacting particle system in parameter space whose empirical measure shadows a deterministic transport PDE with a Wasserstein gradient-flow interpretation. In particular, the perspectives in Nitanda and Suzuki \cite{nitanda2017stochastic}, Rotskoff and Vanden-Eijnden \cite{rotskoff2018neural}, Mei--Montanari--Nguyen \cite{mei2018mean}, Chizat and Bach \cite{chizat2018global}, and Sirignano and Spiliopoulos \cite{sirignano2020mean} (first posted on arXiv in 2018) are strikingly aligned despite emphasizing different tools and goals. This rapid convergence is one reason the ``neurons as particles'' framework became a natural organizing principle for shallow feature learning.
 
@@ -237,9 +237,9 @@ Fix $\ell \in \{1, \dots, d\}$ and consider one internal gradient-based update s
 \dfrac{1}{\sqrt{N}} \Delta W_{\ell-1} \phi_{\ell-1}(x), & 2 \le \ell \le d.
 \end{cases}
 \end{equation}
-We say the parameterization achieves a \emph{maximal update at layer $\ell$} if, for typical training inputs and steps,
+We say the parameterization achieves a \emph{maximal update at layer $\ell$} if, for typical training inputs and steps, its normalized Clifford reverse-norm in $\hCl_N$ is appreciable:
 \begin{equation}\label{eq:4.32}
-\frac{1}{N}\norm{\Delta_{W_{\ell-1}} h_\ell(x^\alpha)}^2 \in \App.
+\frac{1}{N}\scalar{\rev{\Delta_{W_{\ell-1}} h_\ell(x^\alpha)}\,\Delta_{W_{\ell-1}} h_\ell(x^\alpha)} = \frac{1}{N}\norm{\Delta_{W_{\ell-1}} h_\ell(x^\alpha)}^2 \in \App.
 \end{equation}
 If \eqref{eq:4.32} holds simultaneously for all layers $\ell = 1, \dots, d$ (with a single consistent valuation class of $\gamma_N$ and learning-rate hyperparameters), we say that the network satisfies the \emph{maximal feature update criterion}. This is the operational layerwise condition used below; output stability will select the corresponding maximal-update/$\mu$P scaling.
 \end{definition}

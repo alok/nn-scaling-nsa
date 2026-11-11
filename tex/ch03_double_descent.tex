@@ -123,11 +123,11 @@ in internal law under $\hP$, with the zero-vector case interpreted directly.
 \end{lemma}
 
 \begin{proof}
-By Transfer of the finite-dimensional directional calculation, for $a \neq 0$ internal orthogonal invariance reduces to $a = \norm{a}e_1$. Writing the first row of $G$ as $g_1$ and the remaining rows as $G_2$, the transferred Schur-complement identity gives
+By Transfer of the finite-dimensional directional calculation, for $a \neq 0$ internal orthogonal invariance (realized in $\hCl_P$ by $\Pin(P)$ versor sandwiching $v \mapsto \pm U v U^{-1}$) reduces to $a = \norm{a}e_1$. Writing the first row of $G$ as $g_1 \in \hR^Q$ and the remaining rows $g_2, \dots, g_P$ as $G_2$ with exterior $(P-1)$-blade $\bm{G}_2 := g_2 \wedge \dots \wedge g_P \in \bigwedge^{P-1}(\hR^Q) \subset \hCl_Q$, the Hestenes rejection identity $P_{\bm{G}_2}^\perp(g_1) = (g_1 \wedge \bm{G}_2)\bm{G}_2^{-1}$~\cite{hestenes1984clifford} expresses the transferred Schur-complement identity directly as a squared exterior wedge-volume ratio:
 \begin{equation}\label{eq:3.18}
-\bigl[(G G^\top)^{-1}\bigr]_{11}^{-1} = g_1\bigl(I_Q - G_2^\top(G_2 G_2^\top)^{-1}G_2\bigr)g_1^\top.
+\bigl[(G G^\top)^{-1}\bigr]_{11}^{-1} = \frac{\scalar{\rev{(g_1 \wedge \bm{G}_2)}(g_1 \wedge \bm{G}_2)}}{\scalar{\rev{\bm{G}_2}\bm{G}_2}} = g_1\bigl(I_Q - G_2^\top(G_2 G_2^\top)^{-1}G_2\bigr)g_1^\top.
 \end{equation}
-The matrix in parentheses is an internal orthogonal projector of hyperfinite rank $Q - P + 1$, internally independent of $g_1$, so by Transfer the right-hand side has the internal $\ns{\chi}^2_{Q - P + 1}$ distribution.
+The rejection operator $P_{\bm{G}_2}^\perp$ projects onto an internal subspace of hyperfinite codimension $P - 1$, hence hyperfinite dimension $Q - P + 1$, internally independent of $g_1$, so by Transfer the right-hand side has the internal $\ns{\chi}^2_{Q - P + 1}$ distribution. At the square interpolation boundary $Q = P$, $g_1 \wedge \bm{G}_2$ saturates the top-grade pseudoscalar $\bigwedge^Q(\hR^Q)$ with only $1$ degree of freedom ($\ns{\chi}_1^2$, whose inverse expectation is unlimited).
 \end{proof}
 
 \begin{lemma}[Haar Projection Lengths]\label{lem:3.4}
@@ -163,11 +163,11 @@ where $T \in \hR^{N \times N}$ is invertible $\hP$-almost surely. Since $Z = (XQ
 \hat{\theta} &= Q\bigl((XQ)^\top XQ\bigr)^{-1}(XQ)^\top y.
 \end{aligned}
 \end{equation}
-Thus the internal singular values of $S$ cancel: in this regime the mapped estimator $\hat{\theta}$ depends on $S$ only through its column space.
+Thus the internal singular values of $S$ cancel: in this regime the mapped estimator $\hat{\theta}$ depends on $S$ only through its column space---equivalently, only through the unit subspace $N$-blade $\bm{S} := q_1 \wedge \dots \wedge q_N \in \bigwedge^N(\hR^{N_0}) \subset \hCl_{N_0}$ ($s_1 \wedge \dots \wedge s_N = \det(T)\,\bm{S}$), while in sample space $\hR^M$ the fitted response $Z\hat{\eta} = (y \lcontr \bm{Z})\bm{Z}^{-1}$ is Hestenes' interior blade projection onto the design $N$-blade $\bm{Z} = z_1 \wedge \dots \wedge z_N \in \bigwedge^N(\hR^M)$ with Gramian $\det(Z^\top Z) = \scalar{\rev{\bm{Z}}\bm{Z}}$.
 
-Set
+Set $P_S := QQ^\top$ (acting on vectors via $P_S v = (v \lcontr \bm{S})\bm{S}^{-1}$) and
 \begin{equation}\label{eq:3.23}
-P_S := QQ^\top, \qquad \theta_\perp := (I_{N_0} - P_S)\theta_\star.
+P_S\theta_\star = (\theta_\star \lcontr \bm{S})\bm{S}^{-1}, \qquad \theta_\perp := (\theta_\star \wedge \bm{S})\bm{S}^{-1} = (I_{N_0} - P_S)\theta_\star.
 \end{equation}
 The response decomposes internally as
 \begin{equation}\label{eq:3.24}
