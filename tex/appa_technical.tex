@@ -26,7 +26,7 @@ Because $q'$ and the interaction kernel $K$ in \eqref{eq:1.10} are standard boun
 \label{eq:appa-weak-transport}
 \frac{d}{dt}\int_\R q(x)\,\rho_t(dx) = \int_\R q'(x)\,b(x, \rho_t)\,\rho_t(dx).
 \end{equation}
-This is precisely the distributional formulation of \eqref{eq:1.11}; it does not require $\rho_t$ to have a density. The equation is a prototype of a McKean--Vlasov PDE because the velocity field depends on the shadow measure $\rho_t$ itself.
+This is precisely the distributional formulation of \eqref{eq:1.11}; in the Clifford calculus on $\R^k \subset \Cl_k$ with vector Dirac operator $\dirac_x = \sum_{j=1}^k e_j\partial_{x_j}$, the pairing $\int \scalar{(\dirac_x q)\,b}\,\rho_t(dx) = -\int q\,\scalar{\dirac_x(b\rho_t)}\,dx$ expresses the distributional adjointness of the vector gradient $\dirac_x q$ and the scalar Dirac divergence $\scalar{\dirac_x(b\rho_t)} = \dirac_x \lcontr (b\rho_t)$~\cite{hestenes1984clifford,brackx1982clifford}, without requiring $\rho_t$ to have a smooth density. The equation is a prototype of a McKean--Vlasov PDE because the velocity field depends on the shadow measure $\rho_t$ itself.
 
 \section{A Sufficient Condition for Stochastic Equicontinuity}
 \label{sec:appa-equicontinuity}
@@ -217,7 +217,7 @@ for internal matrices $W \in \hR^{N \times p}$ with i.i.d.\ $\hNcal(0, 1)$ entri
 \begin{proof}[Proof of Lemma~\ref{lem:ch2-gauss-cond}]
 By the Transfer Principle, every first-order finite-dimensional linear-algebraic and Gaussian conditioning statement over $\R$ holds verbatim for internal hyperfinite-dimensional matrices over $\hR$. Write the $N$ rows of $W \in \hR^{N \times p}$ as $w_1, \dots, w_N \in \hR^{1 \times p}$. Since the rows are internally independent and identically distributed, it suffices to prove the statement for a single internal row $w \sim \hNcal(0, I_p)$.
 
-Let $\phi \in \hR^{p \times q}$ be internally deterministic and define the internal orthogonal projector $P_\phi = \phi(\phi^\top \phi)^\dagger \phi^\top$ onto $\col(\phi) \subseteq \hR^p$ via the transferred Moore--Penrose pseudoinverse $(\cdot)^\dagger$, with $P_\phi^\perp = I_p - P_\phi$. Decompose
+Let $\phi \in \hR^{p \times q}$ be internally deterministic and define the internal orthogonal projector $P_\phi = \phi(\phi^\top \phi)^\dagger \phi^\top$ onto $\col(\phi) \subseteq \hR^p$ via the transferred Moore--Penrose pseudoinverse $(\cdot)^\dagger$, with $P_\phi^\perp = I_p - P_\phi$. (Equivalently, choosing any nonzero simple internal blade $\bm{\Phi} = u_1 \wedge \dots \wedge u_{r_\phi} \in \bigwedge^{r_\phi}(\hR^p) \subset \hCl_p$ spanning $\col(\phi)$, Hestenes' contraction--wedge decomposition $w\bm{\Phi} = w\lcontr\bm{\Phi} + w\wedge\bm{\Phi}$ expresses the row projection and rejection without choosing a basis as $w P_\phi = (w\lcontr\bm{\Phi})\bm{\Phi}^{-1}$ and $w P_\phi^\perp = (w\wedge\bm{\Phi})\bm{\Phi}^{-1}$~\cite{hestenes1984clifford}; when $r_\phi = 0$, $P_\phi = 0$ and $P_\phi^\perp = I_p$.) Decompose
 \begin{equation}
 \label{eq:appa-one-sided-decomp}
 w = w P_\phi + w P_\phi^\perp.
@@ -259,7 +259,7 @@ where $P^\perp = I_N - P$ and $\widetilde{W} \in \hR^{N \times N}$ is an interna
 This subsection proves Lemma~\ref{lem:gaussian-cond-two-sided}. The statement is a convenient hyperfinite matrix form of linear-Gaussian regression obtained by Transfer: conditioning an internal Gaussian matrix $W$ on the internal linear observations $W\phi$ and $W^\top g$ amounts to removing the components of $W$ that are ``seen'' along the internal spans of $\phi$ and $g$, and leaving an internally independent Gaussian on the orthogonal complement.
 
 \begin{proof}[Proof of Lemma~\ref{lem:gaussian-cond-two-sided}]
-By the Transfer Principle, write the internal Frobenius inner product on $\hR^{N \times N}$ as $\ip{A}{B}_F := \Tr(A^\top B)$. Let $\mathcal{U} := \col(\phi) \subseteq \hR^N$ and $\mathcal{V} := \col(g) \subseteq \hR^N$ and denote the corresponding internal orthogonal projections by $P_\phi$ and $P_g$.
+By the Transfer Principle, write the internal Frobenius inner product on $\hR^{N \times N}$ as $\ip{A}{B}_F := \Tr(A^\top B)$. Let $\mathcal{U} := \col(\phi) \subseteq \hR^N$ and $\mathcal{V} := \col(g) \subseteq \hR^N$ and denote the corresponding internal orthogonal projections by $P_\phi$ and $P_g$ (which, for nonzero simple blades $\bm{\Phi} \in \bigwedge^{r_\phi}(\hR^N)$ and $\bm{G} \in \bigwedge^{r_g}(\hR^N)$ representing $\mathcal{U}$ and $\mathcal{V}$ in $\hCl_N$, act on vectors by $P_\phi(u) = (u\lcontr\bm{\Phi})\bm{\Phi}^{-1}$, $P_\phi^\perp(u) = (u\wedge\bm{\Phi})\bm{\Phi}^{-1}$ and $P_g(v) = (v\lcontr\bm{G})\bm{G}^{-1}$, $P_g^\perp(v) = (v\wedge\bm{G})\bm{G}^{-1}$).
 
 Decompose $W$ into four internal blocks with respect to the orthogonal splittings $\hR^N = \mathcal{V} \oplus \mathcal{V}^\perp$ (rows) and $\hR^N = \mathcal{U} \oplus \mathcal{U}^\perp$ (columns):
 \begin{equation}

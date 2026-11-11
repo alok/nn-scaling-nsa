@@ -151,9 +151,9 @@ Fix standard $n_0 \in \N$ and a nonzero standard input $x \in \R^{n_0}$. Fix unl
 \begin{equation}\label{eq:deep_linear_net}
 h_0 := x, \qquad h_1 := \frac{1}{\sqrt{n_0}} W_0 x, \qquad h_{\ell+1} := \frac{1}{\sqrt{N}} W_\ell h_\ell, \quad \ell \ge 1.
 \end{equation}
-A hyperfinite depth-$D$ network is the prefix ending at $h_D$. Define the internal normalized squared norms
+A hyperfinite depth-$D$ network is the prefix ending at $h_D$. Viewing inputs and hidden states in the Euclidean Clifford algebras $\Cl_{n_0}$ and $\hCl_N$, define the internal normalized squared norms via the grade-$0$ scalar product
 \begin{equation}\label{eq:scalar_phi_def}
-\Phi_0 := \frac{1}{n_0}\norm{x}^2, \qquad \Phi_\ell := \frac{1}{N}\norm{h_\ell}^2, \quad \ell \ge 1.
+\Phi_0 := \frac{1}{n_0}\scalar{x\rev{x}} = \frac{1}{n_0}\norm{x}^2, \qquad \Phi_\ell := \frac{1}{N}\scalar{h_\ell\rev{h_\ell}} = \frac{1}{N}\norm{h_\ell}^2, \quad \ell \ge 1.
 \end{equation}
 
 \begin{lemma}[Multiplicative Variance Recursion]\label{lem:mult_var_recursion}
@@ -207,9 +207,9 @@ The endpoint law in~\eqref{eq:log_phi_endpoint} is a direct consequence of this 
 \begin{proofsketch}
 By Lemma~\ref{lem:mult_var_recursion}, the internal scalar variance satisfies the multiplicative recursion
 \begin{equation}\label{eq:mult_u_def}
-\Phi_{\ell+1} = \Phi_\ell U_{\ell,N}, \qquad U_{\ell,N} := \frac{1}{N}\norm{\xi_\ell}^2, \qquad \xi_\ell \sim \hNcal(0, I_N) \text{ i.i.d.}
+\Phi_{\ell+1} = \Phi_\ell U_{\ell,N}, \qquad U_{\ell,N} := \frac{1}{N}\scalar{\xi_\ell\rev{\xi_\ell}} = \frac{1}{N}\xi_\ell^2 \in \hR, \qquad \xi_\ell \sim \hNcal(0, I_N) \text{ i.i.d.},
 \end{equation}
-Equivalently,
+where $\xi_\ell^2 = \norm{\xi_\ell}^2$ is the Clifford vector square in $\hCl_N$. Equivalently,
 \begin{equation}\label{eq:diff_u_def}
 \Phi_{\ell+1} - \Phi_\ell = \Phi_\ell (U_{\ell,N} - 1).
 \end{equation}
@@ -251,10 +251,10 @@ Although the discussion so far concerns initialization, proportional depth--widt
 
 We write $\Sym(m)$ for the vector space of real symmetric $m \times m$ matrices (with internal counterpart $\ns{\Sym}(m)$ over $\hR$). The internal empirical covariance matrices below are positive semidefinite; they need not be strictly positive definite.
 
-Now fix standard $m \ge 2$ and propagate standard inputs $x^1, \dots, x^m \in \R^{n_0}$ through the same hyperfinite random linear network~\eqref{eq:deep_linear_net} of width $N \in \hNinf$. Define the input and internal hidden-layer Gram matrices by
+Now fix standard $m \ge 2$ and propagate standard inputs $x^1, \dots, x^m \in \R^{n_0}$ through the same hyperfinite random linear network~\eqref{eq:deep_linear_net} of width $N \in \hNinf$. In $\Cl_{n_0}$ and $\hCl_N$, the full geometric product $h_\ell^\alpha h_\ell^\beta = \scalar{h_\ell^\alpha h_\ell^\beta} + h_\ell^\alpha \wedge h_\ell^\beta$ splits into its symmetric scalar inner product and antisymmetric feature-plane bivector; extracting the scalar grade defines the input and internal hidden-layer Gram matrices by
 \begin{equation}\label{eq:multi_linear_gram}
 \begin{aligned}
-\Phi_0^{\alpha\beta} &:= \frac{1}{n_0}\ip{x^\alpha}{x^\beta}, \qquad \Phi_\ell^{\alpha\beta} := \frac{1}{N}\ip{h_\ell^\alpha}{h_\ell^\beta}, \quad \ell \ge 1, \\
+\Phi_0^{\alpha\beta} &:= \frac{1}{n_0}\scalar{x^\alpha\rev{(x^\beta)}} = \frac{1}{n_0}\ip{x^\alpha}{x^\beta}, \qquad \Phi_\ell^{\alpha\beta} := \frac{1}{N}\scalar{h_\ell^\alpha\rev{(h_\ell^\beta)}} = \frac{1}{N}\ip{h_\ell^\alpha}{h_\ell^\beta}, \quad \ell \ge 1, \\
 \Phi_\ell &:= \left[\Phi_\ell^{\alpha\beta}\right]_{\alpha,\beta=1}^m \in \ns{\Sym}(m), \quad \ell \ge 0.
 \end{aligned}
 \end{equation}
@@ -305,7 +305,7 @@ By Transfer of Isserlis' theorem (Wick's formula) to the centered internal Gauss
 \begin{equation}\label{eq:wick_four_point}
 \hE\!\left[h_{\ell+1,1}^\alpha h_{\ell+1,1}^\beta h_{\ell+1,1}^\gamma h_{\ell+1,1}^\delta \mid \mathcal{F}_\ell\right] = \Phi_\ell^{\alpha\beta}\Phi_\ell^{\gamma\delta} + \Phi_\ell^{\alpha\gamma}\Phi_\ell^{\beta\delta} + \Phi_\ell^{\alpha\delta}\Phi_\ell^{\beta\gamma},
 \end{equation}
-and subtracting the first term yields the claimed covariance~\eqref{eq:isserlis_cov_identities}.
+and subtracting the first term yields the claimed covariance~\eqref{eq:isserlis_cov_identities}. (In Clifford terms on $\hCl_N$, the symmetric combination $\Phi_\ell^{\alpha\gamma}\Phi_\ell^{\beta\delta} + \Phi_\ell^{\alpha\delta}\Phi_\ell^{\beta\gamma}$ governs the scalar-grade Gram fluctuations, whereas the antisymmetric counterpart $\frac{1}{N^2}\hE\bigl[\scalar{\rev{(h_{\ell+1}^\alpha \wedge h_{\ell+1}^\beta)}(h_{\ell+1}^\gamma \wedge h_{\ell+1}^\delta)} \mid \mathcal{F}_\ell\bigr] = \bigl(1 - \frac{1}{N}\bigr)(\Phi_\ell^{\alpha\gamma}\Phi_\ell^{\beta\delta} - \Phi_\ell^{\alpha\delta}\Phi_\ell^{\beta\gamma})$ measures the expected squared 2-blade area spanned by token pairs.)
 \end{proof}
 
 By Proposition~\ref{prop:isserlis_gram}, with $\Delta\tau := 1/N \approx 0$ and $\bar{m} := m(m+1)/2$, we may factor the flattened fluctuation as $R_\ell = \Sigma(\Phi_\ell)^{1/2}\xi_\ell$ with $\hE[\xi_\ell \mid \mathcal{F}_\ell] = 0$ and $\hCov(\xi_\ell \mid \mathcal{F}_\ell) = I_{\bar{m}}$ (adjoining independent $\hNcal(0,1)$ coordinates along any null directions of $\Sigma(\Phi_\ell)$), so one Gram increment takes the exact Keisler martingale form $\Delta\Phi_\ell := \Phi_{\ell+1} - \Phi_\ell = \Sigma(\Phi_\ell)^{1/2}\Delta B_\ell$ with $\Delta B_\ell := N^{-1/2}\xi_\ell$. Thus, on the hyperfinite layer-time scale $\tau_\ell = \ell/N$, fluctuations across $\mathcal{O}(N)$ layers accumulate at appreciable order. The following theorem formalizes this pathwise shadow.

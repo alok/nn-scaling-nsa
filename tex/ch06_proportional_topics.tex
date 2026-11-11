@@ -47,12 +47,13 @@ Thus $h_\ell A_\ell$ performs a weighted average across the token index. Because
 
 Normally $M$ is the causal mask, with $M_{\alpha\beta} = +\infty$ for $\alpha > \beta$ and $0$ otherwise. For simplicity, throughout this section we set $M = 0$ and study unmasked attention.
 
-However, naively running this attention-only recursion to an unlimited depth leads to a degeneracy known as rank collapse. To see the scale of one layer, suppress the layer index and note the exact internal identity
+However, naively running this attention-only recursion to an unlimited depth leads to a degeneracy known as rank collapse. To see the scale of one layer, suppress the layer index and decompose the key--query geometric product in the head Clifford algebra $\hCl_{n_k}$:
 \begin{equation}
 \label{eq:ch6-logit-ip}
-\frac{1}{s} k^\top q = \frac{1}{s} \bigl[\ip{k^\alpha}{q^\beta}\bigr]_{\alpha,\beta=1}^m.
+k^\alpha q^\beta = \scalar{k^\alpha q^\beta} + k^\alpha \wedge q^\beta \in \hCl_{n_k}, \qquad
+\frac{1}{s} k^\top q = \frac{1}{s} \bigl[\scalar{k^\alpha q^\beta}\bigr]_{\alpha,\beta=1}^m = \frac{1}{s} \bigl[\ip{k^\alpha}{q^\beta}\bigr]_{\alpha,\beta=1}^m.
 \end{equation}
-Under the internal Gaussian initialization specified above, for fixed $\alpha$ and $\beta$ the summands $k_a^\alpha q_a^\beta$ are internally i.i.d.\ and centered across $a \in [n_k]$, conditional on $h$. Thus $\ip{k^\alpha}{q^\beta}$ is limited of appreciable scale $\sqrt{n_k}$ when the normalized token norms lie in $\App$. With the standard choice $s \asymp \sqrt{n_k}$, the logits lie in $\Lim$ with non-infinitesimal variance, and
+Standard dot-product attention retains only the grade-$0$ scalar inner product $\scalar{k^\alpha q^\beta}$ to form its Softmax logits, discarding the grade-$2$ exterior bivector $k^\alpha \wedge q^\beta \in \bigwedge^2(\hR^{n_k})$ that encodes the oriented rotational plane between key and query tokens (which Clifford-equivariant attention layers propagate explicitly~\cite{ruhe2023clifford,brandstetter2023clifford}). Under the internal Gaussian initialization specified above, for fixed $\alpha$ and $\beta$ the summands $k_a^\alpha q_a^\beta$ are internally i.i.d.\ and centered across $a \in [n_k]$, conditional on $h$. Thus $\scalar{k^\alpha q^\beta} = \ip{k^\alpha}{q^\beta}$ is limited of appreciable scale $\sqrt{n_k}$ when the normalized token norms lie in $\App$. With the standard choice $s \asymp \sqrt{n_k}$, the logits lie in $\Lim$ with non-infinitesimal variance, and
 \begin{equation}
 \label{eq:ch6-unshaped-softmax}
 A = \Softmax\!\left(\frac{1}{s} k^\top q\right)
@@ -96,7 +97,7 @@ The input and hidden token feature covariances are
 \Phi_0 := \frac{1}{n_0} h_0^\top h_0 \in \R^{m \times m}, \qquad
 \Phi_\ell := \frac{1}{N} h_\ell^\top h_\ell \in \hR^{m \times m}, \quad \ell \ge 1.
 \end{equation}
-Thus $\Phi_\ell^{\alpha\beta} = N^{-1}\ip{h_\ell^\alpha}{h_\ell^\beta}$ for $\ell \ge 1$. The rows of $h_1$ are internally i.i.d.\ $\hNcal(0, \Phi_0)$, so the Loeb strong law of large numbers gives $\Phi_1 \approx \Phi_0$ entrywise $\Loeb$-a.s.\ (and hence $\Phi_1 \approxP \Phi_0$). The hidden token covariance is the main object tracked across proportional hyperfinite depth.
+Thus $\Phi_\ell^{\alpha\beta} = N^{-1}\scalar{h_\ell^\alpha\rev{(h_\ell^\beta)}} = N^{-1}\ip{h_\ell^\alpha}{h_\ell^\beta}$ in $\hCl_N$ for $\ell \ge 1$. The rows of $h_1$ are internally i.i.d.\ $\hNcal(0, \Phi_0)$, so the Loeb strong law of large numbers gives $\Phi_1 \approx \Phi_0$ entrywise $\Loeb$-a.s.\ (and hence $\Phi_1 \approxP \Phi_0$). The hidden token covariance is the main object tracked across proportional hyperfinite depth.
 \end{definition}
 
 \begin{lemma}[A Softmax Expansion Around the Uniform Point]
@@ -451,7 +452,7 @@ Since $\lambda_i - \lambda_j \in \App$ for $j \neq i$ on $\ns{K}$ and $\norm{\De
 \label{eq:ch6-ito-eigenvalue}
 \Delta\lambda_i = \Delta\Phi_{ii} + \sum_{j \neq i} \frac{(\Delta\Phi_{ij})^2}{\lambda_i - \lambda_j} + o(\Delta\tau),
 \end{equation}
-where the cubic Taylor remainder $\mathcal{O}(\norm{\Delta\Phi_\ell}_F^3)$ has conditional expectation and conditional $L^2$ norm of order $\Delta\tau^{3/2} = o(\Delta\tau)$ on $\ns{K}$. Moreover, for $j \neq i$, the centered square $(\Delta\Phi_{ij})^2 - \lambda_i \lambda_j\,\Delta\tau$ has conditional mean zero and conditional variance $\mathcal{O}(\Delta\tau^2) = o(\Delta\tau)$, so each off-diagonal square concentrates onto $\lambda_i \lambda_j\,\Delta\tau$ up to $\tilde{o}_\ell(\Delta\tau)$. Meanwhile, the diagonal moments in \eqref{eq:ch6-eigenbasis-qv} show that $\Delta\Phi_{ii} = \sqrt{2}\,\lambda_i\,\Delta B_\ell^{(i)}$ for uncorrelated hyperfinite Brownian increments $(\Delta B_\ell^{(i)})_{i=1}^m$. Taking standard parts via Theorem~\ref{thm:diffusion-approx} gives \eqref{eq:ch6-geom-dyson-sde} up to the first collision. The absence of collisions from a simple initial spectrum, and instantaneous simplicity from an arbitrary positive-definite initial spectrum, are proved in \cite[Theorem 1.1 and Appendix B]{li2026geometric}.
+where the cubic Taylor remainder $\mathcal{O}(\norm{\Delta\Phi_\ell}_F^3)$ has conditional expectation and conditional $L^2$ norm of order $\Delta\tau^{3/2} = o(\Delta\tau)$ on $\ns{K}$. Moreover, for $j \neq i$, the centered square $(\Delta\Phi_{ij})^2 - \lambda_i \lambda_j\,\Delta\tau$ has conditional mean zero and conditional variance $\mathcal{O}(\Delta\tau^2) = o(\Delta\tau)$, so each off-diagonal square concentrates onto $\lambda_i \lambda_j\,\Delta\tau$ up to $\tilde{o}_\ell(\Delta\tau)$. Meanwhile, the diagonal moments in \eqref{eq:ch6-eigenbasis-qv} show that $\Delta\Phi_{ii} = \sqrt{2}\,\lambda_i\,\Delta B_\ell^{(i)}$ for uncorrelated hyperfinite Brownian increments $(\Delta B_\ell^{(i)})_{i=1}^m$. Taking standard parts via Theorem~\ref{thm:diffusion-approx} gives \eqref{eq:ch6-geom-dyson-sde} up to the first collision. (Geometrically in $\Cl_m$, transporting the orthonormal eigenframe via a spinor rotor $u_k(\tau) = R_\tau e_k \rev{R_\tau}$ with $R_\tau \in \Spin(m) \subset \Cl_m^+$ and bivector angular-velocity generator $d\Omega_\tau := (dR_\tau)\rev{R_\tau} = \frac{1}{2}\sum_{i < j} d\omega_{ij}\,(e_i \wedge e_j) \in \bigwedge^2(\R^m)$, the unit bivector identity $(e_i \wedge e_j)^2 = -1$ expands the two-sided sandwich $\exp(\frac{1}{2}d\omega_{ij} e_i\wedge e_j)\,e_i\,\exp(-\frac{1}{2}d\omega_{ij} e_i\wedge e_j) = (1 - \frac{1}{2}(d\omega_{ij})^2)e_i - d\omega_{ij} e_j + o(d\tau)$. Substituting into $\Phi_\tau = \sum_k \lambda_k u_k u_k^\top$ gives $d\Phi_{ij} = (\lambda_j - \lambda_i)\,d\omega_{ij}$ and $d\Phi_{ii} = d\lambda_i - (\lambda_i - \lambda_j)(d\omega_{ij})^2 + o(d\tau)$; matching $\hE[(d\Phi_{ij})^2] = \lambda_i\lambda_j\,d\tau$ and $\hE[d\Phi_{ii}] = 0$ immediately forces the repulsive drift $+(\lambda_i - \lambda_j)(d\omega_{ij})^2 = \frac{\lambda_i\lambda_j}{\lambda_i - \lambda_j}\,d\tau$ as a direct consequence of $(e_i \wedge e_j)^2 = -1$ in $\Spin(m)$~\cite{hestenes1984clifford,doran2003geometric}.) The absence of collisions from a simple initial spectrum, and instantaneous simplicity from an arbitrary positive-definite initial spectrum, are proved in \cite[Theorem 1.1 and Appendix B]{li2026geometric}.
 \end{proof}
 
 \subsection{Mean Field Limit, a Burgers PDE, and a Fixed Point Equation}
@@ -471,13 +472,13 @@ G_\tau(z) := \int_\R \frac{x}{z - x}\,\rho_\tau(dx), \qquad z \in \C \setminus \
 \end{equation}
 (Equivalently, $G_\tau(z) = z\,g_\tau(z) - 1$ where $g_\tau$ is the Stieltjes transform.)
 
-\begin{remark}[$T$-Transform Inversion]
+\begin{remark}[$T$-Transform Inversion and $\Cl_2^+$]
 \label{rem:t-transform-inversion}
-Let $g_\tau(z) := \int_\R \frac{1}{z - x}\,\rho_\tau(dx)$ be the Stieltjes transform. Whenever $\rho_\tau$ admits a continuous density (which we denote by the same symbol) at a point $x \in \R$, the standard Stieltjes inversion formula gives
+Consider the Stieltjes transform $g_\tau(z) := \int_\R (z - x)^{-1}\,\rho_\tau(dx)$. Identifying the spectral plane $\C \cong \Cl_2^+$ via the unit bivector $\bm{i} := e_1 e_2 \in \Cl_2^+$ ($\bm{i}^2 = -1$, $\rev{\bm{i}} = -\bm{i}$) realizes $(z - x)^{-1} = \rev{(z - x)}/\abs{z - x}^2$ ($z = x_0 + \varepsilon\bm{i}$) as the two-dimensional monogenic Cauchy--Dirac kernel~\cite{brackx1982clifford}. Whenever $\rho_\tau$ admits a continuous density (which we denote by the same symbol) at a point $x \in \R$, the standard Stieltjes inversion formula extracts the bivector grade at an infinitesimal vertical offset $\varepsilon \in \hR_{>0} \cap \Inf$:
 \begin{equation}
 \label{eq:ch6-stieltjes-inv}
 \rho_\tau(x) = -\frac{1}{\pi}\lim_{\varepsilon \downarrow 0} \Im g_\tau(x + i\varepsilon)
-= -\frac{1}{\pi}\,\st\bigl(\Im \ns{g}_\tau(x + i\varepsilon)\bigr) \quad (\varepsilon \in \hR_{>0} \cap \Inf).
+= -\frac{1}{\pi}\,\st\bigl(\scalar{(-\bm{i})\,\ns{g}_\tau(x + \varepsilon\bm{i})}\bigr) \quad (\varepsilon \in \hR_{>0} \cap \Inf).
 \end{equation}
 Since $g_\tau(z) = \frac{G_\tau(z) + 1}{z}$, we can equivalently write this in terms of the $T$-transform:
 \begin{equation}
