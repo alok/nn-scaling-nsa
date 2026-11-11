@@ -1,0 +1,44 @@
+\chapter*{Notation}
+\addcontentsline{toc}{chapter}{Notation}
+
+\noindent
+\begin{xltabular}{\textwidth}{@{}lX@{}}
+\toprule
+\textbf{Symbol} & \textbf{Meaning} \\
+\midrule
+\endfirsthead
+\toprule
+\textbf{Symbol} & \textbf{Meaning} \\
+\midrule
+\endhead
+\bottomrule
+\endfoot
+\bottomrule
+\endlastfoot
+$n, N$ & Width of a hidden layer (number of neurons / channels); $N \in \hNinf$ denotes an unlimited hypernatural width. \\
+$d, D$ & Depth, or number of hidden layers or blocks, excluding the input layer; $D \in \hNinf$ denotes an unlimited hypernatural depth. \\
+$n_0, N_0$ & Input dimension (standard $n_0 \in \N$, or unlimited $N_0 \in \hNinf$ in Chapter~3). \\
+$m, M$ & Number of inputs / training examples / tokens (standard $m \in \N$, or unlimited $M \in \hNinf$ in Chapter~3 and Section~6.2.4). \\
+$x^\alpha$ & Input (data point) indexed by $\alpha \in \{1, \dots, m\}$. \\
+$y^\alpha$ & Label / target associated with $x^\alpha$. \\
+$\theta$ & Network parameters (weights). \\
+$W_0, W_\ell, W_d$ & For scalar-output MLPs of hyperfinite width $N$, $W_0 \in \hR^{N\times n_0}$, $W_\ell \in \hR^{N\times N}$ for $1 \le \ell \le d-1$, and $W_d \in \hR^{1\times N}$ is the readout row vector. \\
+$f(x^\alpha; \theta) = f^\alpha(\theta)$ & Network output at input $x^\alpha$. \\
+$\varphi$ & Activation function (with natural extension ${}^*\varphi : \hR \to \hR$, often written $\varphi$ when unambiguous). \\
+$c$ & Variance-preserving normalization constant, $c := (\E[\varphi(w)^2])^{-1}$ for $w \sim \mathcal{N}(0,1)$. \\
+$h_\ell^\alpha$ & Hidden pre-activations (or hidden states) at layer $\ell$ for input $x^\alpha$. \\
+$\varphi_\ell^\alpha = \varphi(h_\ell^\alpha)$, $\varphi_\ell = [\varphi_\ell^1 \;\cdots\; \varphi_\ell^m]$ & Hidden post-activations at layer $\ell$ and their dataset-column matrix. \\
+$g_\ell^\alpha$ & Backward post-activation neurons at layer $\ell$ for input $x^\alpha$. \\
+$z_\ell^\alpha$ & Backward pre-activation neurons at layer $\ell$ for input $x^\alpha$. \\
+$\Phi^{(N)}, \Phi_\ell^{(N)}, \Phi_\ell^{\prime(N)}$ & Hyperfinite empirical feature and derivative kernels in Chapter~2, with hidden-layer normalization $1/N$ and input normalization $1/n_0$. The superscript $(N)$ records hyperfinite width. \\
+$\Phi, \Phi_\ell, \Phi_\ell'$ & Standard-part kernels in Chapters~2 and~4 ($\Phi_\ell = \st(\Phi_\ell^{(N)})$). In Chapters~5 and~6, $\Phi_\ell$ also denotes internal layer covariances and $\Phi_\tau$ their standard SDE shadow. \\
+$K_t^{(N)}, K_t, K$ & Hyperfinite empirical NTK and standard-part NTKs. Subscripts record time and superscripts in parentheses record width. \\
+$L(\theta)$ & Training objective (empirical risk); $L(\theta) = \frac{1}{m}\sum_{\alpha=1}^m \ell(f^\alpha(\theta), y^\alpha)$. \\
+$\E, \Prob$ & Standard expectation and probability. \\
+$\norm{\cdot}, \ip{\cdot}{\cdot}$ & Euclidean norm and inner product (standard or internal by transfer, unless specified otherwise). \\
+\midrule
+$\hR, \hN, \hNinf$ & Robinson's $\aleph_1$-saturated hyperreals, hypernaturals, and unlimited hypernaturals. \\
+$\Lim, \Inf, \App$ & Ring of limited hyperreals $\Lim$, maximal ideal of infinitesimals $\Inf$, and group of appreciable hyperreals $\App = \Lim \setminus \Inf$; $a \approx b \iff a - b \in \Inf$, and $a \asymp b \iff a/b \in \App$. \\
+$\st, \mon(x)$ & Standard-part homomorphism $\st : \Lim \to \R$ ($\st(x) \in \R$ unique with $x \approx \st(x)$) and monad (halo) $\mon(x) = \{y \in \hR : y \approx x\}$. \\
+$\hP, \hE, \Loeb, \EL$ & Internal probability $\hP$, internal expectation $\hE$, Loeb probability measure $\Loeb$ on $\mathcal{L}(\mathcal{A})$, and Loeb expectation $\EL$; $X \approxP Y$ means $X \approx Y$ $\Loeb$-almost surely. \\
+\end{xltabular}

@@ -1,0 +1,82 @@
+\usepackage[utf8]{inputenc}
+\usepackage[T1]{fontenc}
+\usepackage{lmodern}
+\usepackage{microtype}
+\usepackage[margin=1.15in]{geometry}
+\usepackage{amsmath,amssymb,amsfonts,amsthm,mathtools,bm}
+\usepackage{booktabs}
+\usepackage{array}
+\usepackage{tabularx}
+\usepackage{xltabular}
+\usepackage{graphicx}
+\usepackage{xcolor}
+\usepackage{enumitem}
+\usepackage{tikz}
+\usetikzlibrary{arrows.meta,positioning,calc,decorations.pathreplacing}
+\usepackage[colorlinks=true,linkcolor=blue!60!black,citecolor=green!45!black,urlcolor=blue!65!black]{hyperref}
+
+% Numbering matching Mufan Li's Lecture Notes on Neural Network Scaling Limits
+\numberwithin{equation}{chapter}
+
+\theoremstyle{plain}
+\newtheorem{theorem}{Theorem}[chapter]
+\newtheorem{proposition}[theorem]{Proposition}
+\newtheorem{lemma}[theorem]{Lemma}
+\newtheorem{corollary}[theorem]{Corollary}
+
+\theoremstyle{definition}
+\newtheorem{definition}[theorem]{Definition}
+\newtheorem{exercise}[theorem]{Exercise}
+
+\theoremstyle{remark}
+\newtheorem{remark}[theorem]{Remark}
+
+% Proof sketch environment
+\newenvironment{proofsketch}[1][Proof Sketch]{\begin{proof}[#1]}{\end{proof}}
+
+% Standard linear algebra and probability macros
+\newcommand{\R}{\mathbb{R}}
+\newcommand{\N}{\mathbb{N}}
+\newcommand{\C}{\mathbb{C}}
+\newcommand{\E}{\mathbb{E}}
+\newcommand{\Prob}{\mathbb{P}}
+\newcommand{\Var}{\operatorname{Var}}
+\newcommand{\Cov}{\operatorname{Cov}}
+\newcommand{\Tr}{\operatorname{Tr}}
+\newcommand{\Sym}{\operatorname{Sym}}
+\newcommand{\SPD}{\operatorname{SPD}}
+\newcommand{\GL}{\operatorname{GL}}
+\newcommand{\diag}{\operatorname{diag}}
+\newcommand{\Softmax}{\operatorname{Softmax}}
+\newcommand{\grad}{\operatorname{grad}}
+\newcommand{\col}{\operatorname{col}}
+\newcommand{\spn}{\operatorname{span}}
+\newcommand{\rank}{\operatorname{rank}}
+\newcommand{\GP}{\operatorname{GP}}
+\newcommand{\1}{\mathbf{1}}
+\newcommand{\ind}[1]{\mathbb{1}_{\{#1\}}}
+\newcommand{\ip}[2]{\left\langle #1, #2 \right\rangle}
+\newcommand{\norm}[1]{\left\lVert #1 \right\rVert}
+\newcommand{\abs}[1]{\left\lvert #1 \right\rvert}
+
+% Nonstandard Analysis macros
+\newcommand{\ns}[1]{{}^*#1}
+\newcommand{\hR}{{}^*\mathbb{R}}
+\newcommand{\hN}{{}^*\mathbb{N}}
+\newcommand{\hC}{{}^*\mathbb{C}}
+\newcommand{\hNinf}{{}^*\mathbb{N} \setminus \mathbb{N}}
+\newcommand{\hE}{{}^*\mathbb{E}}
+\newcommand{\hP}{{}^*\mathbb{P}}
+\newcommand{\hVar}{{}^*\!\operatorname{Var}}
+\newcommand{\hCov}{{}^*\!\operatorname{Cov}}
+\newcommand{\hNcal}{{}^*\mathcal{N}}
+\newcommand{\st}{\operatorname{st}}
+\newcommand{\mon}{\operatorname{mon}}
+\newcommand{\gal}{\operatorname{gal}}
+\newcommand{\Lim}{\mathbb{L}}
+\newcommand{\Inf}{\mathbb{I}}
+\newcommand{\App}{\mathbb{A}}
+\newcommand{\Loeb}{L(\hP)}
+\newcommand{\EL}{\mathbb{E}_L}
+\newcommand{\approxP}{\stackrel{L(\hP)}{\approx}}
+\newcommand{\eqd}{\stackrel{d}{=}}

@@ -1,0 +1,45 @@
+\documentclass[11pt,oneside]{report}
+
+\input{preamble}
+
+\begin{document}
+
+% Title page matching Mufan Li's minimalist frontmatter
+\hypersetup{pageanchor=false}
+\begin{titlepage}
+\centering
+\vspace*{3.2in}
+{\LARGE Lecture Notes on Neural Network Scaling Limits\\[0.4em]
+\large\itshape Rewritten via Nonstandard Analysis\par}
+\vspace{1.8em}
+{\large Based on the STAT 946 Lecture Notes of Mufan Li\\[0.35em]
+\normalsize Nonstandard Analysis Edition by Alok Singh\par}
+\vspace{1.2em}
+{\normalsize November 2026\par}
+\vfill
+\end{titlepage}
+\hypersetup{pageanchor=true}
+
+\pagenumbering{roman}
+\tableofcontents
+\clearpage
+
+\pagenumbering{arabic}
+
+\input{ch01_intro}
+\input{notation}
+\input{ch02_kernels}
+\input{ch03_double_descent}
+\input{ch04_feature_learning}
+\input{ch05_depth_sde}
+\input{ch06_proportional_topics}
+
+\appendix
+\input{appa_technical}
+
+\input{acknowledgements}
+
+\bibliographystyle{plain}
+\bibliography{refs}
+
+\end{document}
